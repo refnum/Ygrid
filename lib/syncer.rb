@@ -1,10 +1,10 @@
 #!/usr/bin/ruby -w
 #==============================================================================
 #	NAME:
-#		rsync.rb
+#		syncer.rb
 #
 #	DESCRIPTION:
-#		Rsync module.
+#		Rsync-based syncer.
 #
 #	COPYRIGHT:
 #		Copyright (c) 2012, refNum Software
@@ -54,12 +54,12 @@ require_relative 'utils';
 #==============================================================================
 # Module
 #------------------------------------------------------------------------------
-module Rsync
+module Syncer
 
 # Paths
-PATH_CONF = "/tmp/ygrid_rsyncd.conf";
-PATH_LOG  = "/tmp/ygrid_rsyncd.log";
-PATH_PID  = "/tmp/ygrid_rsyncd.pid";
+PATH_CONF = "/tmp/ygrid_syncer.conf";
+PATH_LOG  = "/tmp/ygrid_syncer.log";
+PATH_PID  = "/tmp/ygrid_syncer.pid";
 
 
 # Config
@@ -82,9 +82,9 @@ CONFIG_FILE
 
 
 #============================================================================
-#		Rsync.running? : Is rsync running?
+#		Syncer.running? : Is the syncer running?
 #----------------------------------------------------------------------------
-def Rsync.running?
+def Syncer.running?
 
 	return(Utils.cmdRunning?(PATH_PID));
 
@@ -95,9 +95,9 @@ end
 
 
 #============================================================================
-#		Rsync.start : Start rsync.
+#		Syncer.start : Start the syncer.
 #----------------------------------------------------------------------------
-def Rsync.start(theArgs)
+def Syncer.start(theArgs)
 
 	# Get the state we need
 	theConfig = CONFIG_FILE.dup;
@@ -107,7 +107,7 @@ def Rsync.start(theArgs)
 	theConfig.gsub!("TOKEN_PATH_PID",  PATH_PID);
 	theConfig.gsub!("TOKEN_PATH_ROOT", pathRoot);
 
-	abort("rsync already running!") if (Rsync.running?);
+	abort("Syncer already running!") if (Syncer.running?);
 
 
 
@@ -126,12 +126,12 @@ end
 
 
 #============================================================================
-#		Rsync.stop : Stop rsync.
+#		Syncer.stop : Stop the syncer.
 #----------------------------------------------------------------------------
-def Rsync.stop()
+def Syncer.stop()
 
 	# Stop the server
-	if (Rsync.running?)
+	if (Syncer.running?)
 	
 		Process.kill("SIGTERM", IO.read(PATH_PID).to_i);
 

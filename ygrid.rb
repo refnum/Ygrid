@@ -45,8 +45,8 @@
 #------------------------------------------------------------------------------
 require 'optparse';
 
-require_relative 'lib/rsync';
-require_relative 'lib/serf';
+require_relative 'lib/syncer';
+require_relative 'lib/cluster';
 require_relative 'lib/status';
 require_relative 'lib/utils';
 
@@ -59,7 +59,7 @@ require_relative 'lib/utils';
 #------------------------------------------------------------------------------
 def checkRunning()
 
-	if (!Rsync.running? || !Serf.running?)
+	if (!Syncer.running? || !Cluster.running?)
 		puts "Start the ygrid server first!";
 		exit(-1);
 	end
@@ -76,10 +76,10 @@ end
 def cmdStart(theArgs)
 
 	# Stop the server
-	if (Rsync.running? || Serf.running?)
+	if (Syncer.running? || Cluster.running?)
 		theAction = "Restarting";
-		Rsync.stop();
-		Serf.stop();
+		Syncer.stop();
+		Cluster.stop();
 	else
 		theAction = "Starting";
 	end
@@ -89,18 +89,18 @@ def cmdStart(theArgs)
 	# Start the server
 	puts "#{theAction} ygrid server...";
 
-	startedRsync = Rsync.start(theArgs);
-	startedSerf  = Serf.start( theArgs);
+	startedSyncer  = Syncer.start( theArgs);
+	startedCluster = Cluster.start(theArgs);
 
 
 
 	# Handle failure
-	if (!startedRsync || !startedSerf)
-		puts "Unable to start rsync!" if (!startedRsync);
-		puts "Unable to start serf!"  if (!startedSerf);
+	if (!startedSyncer || !startedCluster)
+		puts "Unable to start syncer!"  if (!startedSyncer);
+		puts "Unable to start cluster!" if (!startedCluster);
 
-		Rsync.stop();
-		Serf.stop();
+		Syncer.stop();
+		Cluster.stop();
 		exit(-1);
 	end
 
@@ -118,8 +118,8 @@ def cmdStop(theArgs)
 	# Stop the server
 	puts "Stopping ygrid server...";
 
-	Rsync.stop();
-	Serf.stop();
+	Syncer.stop();
+	Cluster.stop();
 
 end
 
@@ -141,7 +141,7 @@ def cmdJoin(theArgs)
 	# Join the grids
 	puts "Joining #{numGrids}...";
 	
-	Serf.joinGrids(theGrids);
+	Cluster.joinGrids(theGrids);
 
 end
 
@@ -163,7 +163,7 @@ def cmdLeave(theArgs)
 	# Leave the grids
 	puts "Leaving #{numGrids}...";
 
-	Serf.leaveGrids(theGrids);
+	Cluster.leaveGrids(theGrids);
 
 end
 
@@ -215,7 +215,7 @@ def cmdStatus(theArgs)
 	Utils.sleepLoop(2) do
 
 		theGrids.each do |theGrid|
-			gridStatus = Serf.gridStatus(theGrid);
+			gridStatus = Cluster.gridStatus(theGrid);
 			Status.putStdout(theGrid, gridStatus);
 		end
 

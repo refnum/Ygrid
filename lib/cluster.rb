@@ -1,10 +1,10 @@
 #!/usr/bin/ruby -w
 #==============================================================================
 #	NAME:
-#		serf.rb
+#		cluster.rb
 #
 #	DESCRIPTION:
-#		Serf module.
+#		Serf-based cluster.
 #
 #	COPYRIGHT:
 #		Copyright (c) 2012, refNum Software
@@ -54,12 +54,12 @@ require_relative 'utils';
 #==============================================================================
 # Module
 #------------------------------------------------------------------------------
-module Serf
+module Cluster
 
 # Paths
-PATH_CONF = "/tmp/ygrid_serf.conf";
-PATH_LOG  = "/tmp/ygrid_serf.log";
-PATH_PID  = "/tmp/ygrid_serf.pid";
+PATH_CONF = "/tmp/ygrid_cluster.conf";
+PATH_LOG  = "/tmp/ygrid_cluster.log";
+PATH_PID  = "/tmp/ygrid_cluster.pid";
 
 
 # Config
@@ -83,9 +83,9 @@ CONFIG_FILE
 
 
 #============================================================================
-#		Serf.running? : Is serf running?
+#		Cluster.running? : Is the cluster running?
 #----------------------------------------------------------------------------
-def Serf.running?
+def Cluster.running?
 
 	return(Utils.cmdRunning?(PATH_PID));
 
@@ -96,9 +96,9 @@ end
 
 
 #============================================================================
-#		Serf.start : Start serf.
+#		Cluster.start : Start the cluster.
 #----------------------------------------------------------------------------
-def Serf.start(theArgs)
+def Cluster.start(theArgs)
 
 	# Get the state we need
 	theConfig = CONFIG_FILE.dup;
@@ -111,7 +111,7 @@ def Serf.start(theArgs)
 	theConfig.gsub!("TOKEN_HOST_LOAD",  Utils.sysLoad());
 	theConfig.gsub!("TOKEN_GRIDS",      theGrids);
 
-	abort("serf already running!") if (Serf.running?);
+	abort("Cluster already running!") if (Cluster.running?);
 
 
 
@@ -132,12 +132,12 @@ end
 
 
 #============================================================================
-#		Serf.stop : Stop serf.
+#		Cluster.stop : Stop the cluster.
 #----------------------------------------------------------------------------
-def Serf.stop()
+def Cluster.stop()
 
 	# Stop the server
-	if (Serf.running?)
+	if (Cluster.running?)
 	
 		Process.kill("SIGTERM", IO.read(PATH_PID).to_i);
 
@@ -153,9 +153,9 @@ end
 
 
 #============================================================================
-#		Serf.joinGrids : Join some grids.
+#		Cluster.joinGrids : Join some grids.
 #----------------------------------------------------------------------------
-def Serf.joinGrids(theGrids)
+def Cluster.joinGrids(theGrids)
 
 	# Calculate the new grids
 	newGrids = getGrids().concat(theGrids);
@@ -172,9 +172,9 @@ end
 
 
 #============================================================================
-#		Serf.leaveGrids : Leave some grids.
+#		Cluster.leaveGrids : Leave some grids.
 #----------------------------------------------------------------------------
-def Serf.leaveGrids(theGrids)
+def Cluster.leaveGrids(theGrids)
 
 	# Calculate the new grids
 	newGrids = getGrids();
@@ -195,9 +195,9 @@ end
 
 
 #============================================================================
-#		Serf.gridStatus : Get the status of a grid.
+#		Cluster.gridStatus : Get the status of a grid.
 #----------------------------------------------------------------------------
-def Serf.gridStatus(theGrid)
+def Cluster.gridStatus(theGrid)
 
 	# Get the state we need
 	if (!theGrid.empty?)
@@ -218,9 +218,9 @@ end
 
 
 #============================================================================
-#		Serf.getGrids : Get the grids we particpate in.
+#		Cluster.getGrids : Get the grids we particpate in.
 #----------------------------------------------------------------------------
-def Serf.getGrids()
+def Cluster.getGrids()
 
 	theInfo  = JSON.parse(`serf info -format=json`);
 	theGrids = theInfo["tags"]["grids"].split(",");
@@ -234,9 +234,9 @@ end
 
 
 #============================================================================
-#		Serf.setGrids : Set the grids we particpate in.
+#		Cluster.setGrids : Set the grids we particpate in.
 #----------------------------------------------------------------------------
-def Serf.setGrids(theGrids)
+def Cluster.setGrids(theGrids)
 
 	theGrids = theGrids.sort.uniq.join(",");
 	theLog   = `serf tags -set grids=#{theGrids}`.chomp;

@@ -45,7 +45,6 @@
 #------------------------------------------------------------------------------
 require 'json';
 
-require_relative 'serf';
 require_relative 'utils';
 
 

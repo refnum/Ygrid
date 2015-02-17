@@ -45,9 +45,10 @@
 #------------------------------------------------------------------------------
 require 'optparse';
 
-require_relative 'lib/syncer';
 require_relative 'lib/cluster';
+require_relative 'lib/controller';
 require_relative 'lib/status';
+require_relative 'lib/syncer';
 require_relative 'lib/utils';
 
 
@@ -243,7 +244,7 @@ end
 #------------------------------------------------------------------------------
 def checkStatus(theCmd)
 	
-	if (!["start", "help"].include?(theCmd) && !Controller.running)
+	if (!["start", "help"].include?(theCmd) && !Controller.running?)
 		puts "Start the ygrid server first!";
 		exit(-1);
 	end

@@ -57,9 +57,9 @@ require_relative 'utils';
 module Cluster
 
 # Paths
-PATH_CONF = "/tmp/ygrid_cluster.conf";
-PATH_LOG  = "/tmp/ygrid_cluster.log";
-PATH_PID  = "/tmp/ygrid_cluster.pid";
+PATH_CONF = Utils.pathData("cluster.conf");
+PATH_LOG  = Utils.pathData("cluster.log");
+PATH_PID  = Utils.pathData("cluster.pid");
 
 
 # Config

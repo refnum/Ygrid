@@ -57,9 +57,9 @@ require_relative 'utils';
 module Syncer
 
 # Paths
-PATH_CONF = "/tmp/ygrid_syncer.conf";
-PATH_LOG  = "/tmp/ygrid_syncer.log";
-PATH_PID  = "/tmp/ygrid_syncer.pid";
+PATH_CONF = Utils.pathData("syncer.conf");
+PATH_LOG  = Utils.pathData("syncer.log");
+PATH_PID  = Utils.pathData("syncer.pid");
 
 
 # Config
@@ -132,12 +132,10 @@ def Syncer.stop()
 
 	# Stop the server
 	if (Syncer.running?)
-	
 		Process.kill("SIGTERM", IO.read(PATH_PID).to_i);
 
 		FileUtils.rm(PATH_CONF);
 		FileUtils.rm(PATH_PID);
-
 	end
 
 end

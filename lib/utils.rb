@@ -55,6 +55,9 @@ require 'rbconfig';
 #------------------------------------------------------------------------------
 module Utils
 
+# Paths
+PATH_RUNTIME = "/tmp/ygrid";
+
 
 
 
@@ -320,6 +323,49 @@ def Utils.getArguments
 	end
 	
 	return(theArgs);
+
+end
+
+
+
+
+
+#============================================================================
+#		Utils.pathData : Get a path to our runtime data.
+#----------------------------------------------------------------------------
+def Utils.pathData(theChild="")
+
+	return(PATH_RUNTIME + "/" + theChild);
+
+end
+
+
+
+
+
+#============================================================================
+#		Utils.forkDaemon : Fork a daemon process.
+#----------------------------------------------------------------------------
+def Utils.forkDaemon(pathLog, pathPID)
+
+	# Fork the daemon
+	#
+	# Equivalent to Process.daemon except rather than exiting the parent we
+	# return true to the parent and false to the daemon.
+	#
+	# See http://www.jstorimer.com/blogs/workingwithcode/7766093-daemon-processes-in-ruby
+	return(true) if fork;
+
+	Process.setsid;
+    exit if fork;
+
+    Dir.chdir "/";
+    STDIN.reopen  "/dev/null";
+    STDOUT.reopen pathLog, "a";
+    STDERR.reopen pathLog, "a";
+	IO.write(pathPID, Process.pid);
+
+    return(false);
 
 end
 

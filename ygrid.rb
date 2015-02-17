@@ -55,52 +55,17 @@ require_relative 'lib/utils';
 
 
 #==============================================================================
-#		checkRunning : Check the server is running.
-#------------------------------------------------------------------------------
-def checkRunning()
-
-	if (!Syncer.running? || !Cluster.running?)
-		puts "Start the ygrid server first!";
-		exit(-1);
-	end
-	
-end
-
-
-
-
-
-#==============================================================================
 #		cmdStart : Start the server.
 #------------------------------------------------------------------------------
 def cmdStart(theArgs)
 
-	# Stop the server
-	if (Syncer.running? || Cluster.running?)
-		theAction = "Restarting";
-		Syncer.stop();
-		Cluster.stop();
-	else
-		theAction = "Starting";
-	end
-
-
-
 	# Start the server
-	puts "#{theAction} ygrid server...";
+	puts "#{Controller.running? ? "Restarting" : "Starting"} ygrid server...";
 
-	startedSyncer  = Syncer.start( theArgs);
-	startedCluster = Cluster.start(theArgs);
-
-
-
-	# Handle failure
-	if (!startedSyncer || !startedCluster)
-		puts "Unable to start syncer!"  if (!startedSyncer);
-		puts "Unable to start cluster!" if (!startedCluster);
-
-		Syncer.stop();
-		Cluster.stop();
+	if (!Controller.start(theArgs))
+		puts "Unable to start server!";
+		
+		Controller.stop();
 		exit(-1);
 	end
 
@@ -118,8 +83,7 @@ def cmdStop(theArgs)
 	# Stop the server
 	puts "Stopping ygrid server...";
 
-	Syncer.stop();
-	Cluster.stop();
+	Controller.stop();
 
 end
 
@@ -275,6 +239,22 @@ end
 
 
 #==============================================================================
+#		checkStatus : Check the status.
+#------------------------------------------------------------------------------
+def checkStatus(theCmd)
+	
+	if (!["start", "help"].include?(theCmd) && !Controller.running)
+		puts "Start the ygrid server first!";
+		exit(-1);
+	end
+
+end
+
+
+
+
+
+#==============================================================================
 #		ygrid : Simple clustering.
 #------------------------------------------------------------------------------
 def ygrid
@@ -284,10 +264,7 @@ def ygrid
 	theCmd  = theArgs["cmd"];
 
 	Utils.checkInstall();
-	
-	if (!["start", "help"].include?(theCmd))
-		checkRunning();
-	end
+	checkStatus(theCmd);
 
 
 

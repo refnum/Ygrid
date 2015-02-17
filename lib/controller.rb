@@ -43,6 +43,8 @@
 #==============================================================================
 # Imports
 #------------------------------------------------------------------------------
+require "xmlrpc/server";
+
 require_relative 'cluster';
 require_relative 'syncer';
 
@@ -56,7 +58,8 @@ require_relative 'syncer';
 module Controller
 
 # Paths
-PATH_CONFIG = "/tmp/ygrid";
+PATH_LOG = Utils.pathData("controller.log");
+PATH_PID = Utils.pathData("controller.pid");
 
 
 
@@ -67,7 +70,7 @@ PATH_CONFIG = "/tmp/ygrid";
 #----------------------------------------------------------------------------
 def Controller.running?
 
-	return(Syncer.running? && Cluster.running?);
+	return(Utils.cmdRunning?(PATH_PID) && Syncer.running? && Cluster.running?);
 
 end
 
@@ -80,6 +83,19 @@ end
 #----------------------------------------------------------------------------
 def Controller.start(theArgs)
 
+	# Create our state
+	FileUtils.mkdir_p(Utils.pathData());
+
+
+
+	# Start the server
+	if (Utils.forkDaemon(PATH_LOG, PATH_PID))
+		Controller.runServer();
+	end
+
+
+
+	# Start the sub-servers
 	startedSyncer  = Syncer.start( theArgs);
 	startedCluster = Cluster.start(theArgs);
 
@@ -92,12 +108,46 @@ end
 
 
 #============================================================================
-#		Syncer.stop : Stop the syncer.
+#		Controller.stop : Stop the controller.
 #----------------------------------------------------------------------------
-def Syncer.stop()
+def Controller.stop()
 
+	# Stop the server
+	if (Utils.cmdRunning?(PATH_PID))
+		Process.kill("SIGTERM", IO.read(PATH_PID).to_i);
+
+		FileUtils.rm(PATH_PID);
+	end
+
+
+
+	# Stop the sub-servers
 	Syncer.stop();
 	Cluster.stop();
+
+end
+
+
+
+
+
+#============================================================================
+#		Controller.runServer : Run the server.
+#----------------------------------------------------------------------------
+def Controller.runServer()
+
+	# Create the server
+	theServer = XMLRPC::Server.new(7956);
+
+	trap('SIGTERM') do
+		theServer.shutdown();
+		exit
+	end
+
+
+
+	# And run it
+	theServer.serve();
 
 end
 

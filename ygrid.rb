@@ -59,7 +59,7 @@ require_relative 'lib/utils';
 def cmdStart(theArgs)
 
 	# Start the server
-	puts "Starting ygrid server...";
+	puts "#{Controller.running? ? "Restarting" : "Starting"} ygrid server...";
 	theErrors = Controller.start(theArgs);
 
 

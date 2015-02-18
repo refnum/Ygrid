@@ -67,7 +67,7 @@ CONFIG_FILE = <<CONFIG_FILE
 log file  = TOKEN_PATH_LOG
 pid file  = TOKEN_PATH_PID
 
-port       = 42351
+port       = 7948
 use chroot = no
 list       = no
 read only  = no
@@ -101,21 +101,19 @@ def Syncer.start(theArgs)
 
 	# Get the state we need
 	theConfig = CONFIG_FILE.dup;
-	pathRoot  = theArgs["root"];
 
 	theConfig.gsub!("TOKEN_PATH_LOG",  PATH_LOG);
 	theConfig.gsub!("TOKEN_PATH_PID",  PATH_PID);
-	theConfig.gsub!("TOKEN_PATH_ROOT", pathRoot);
+	theConfig.gsub!("TOKEN_PATH_ROOT", theArgs["root"]);
 
 	abort("Syncer already running!") if (Syncer.running?);
 
 
 
 	# Start the server
-	FileUtils.mkpath(pathRoot);
 	IO.write(PATH_CONF, theConfig);
 
-	system("rsync", "--daemon" , "--config=#{PATH_CONF}");
+	system("rsync", "--daemon", "--config=#{PATH_CONF}");
 
 end
 

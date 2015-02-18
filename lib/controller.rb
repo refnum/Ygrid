@@ -83,8 +83,9 @@ end
 #----------------------------------------------------------------------------
 def Controller.start(theArgs)
 
-	# Create our state
-	FileUtils.mkdir_p(Utils.pathData());
+	# Get the state we need
+	FileUtils.mkpath(Utils.pathData());
+	FileUtils.mkpath(theArgs["root"]);
 
 
 

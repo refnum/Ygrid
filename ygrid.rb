@@ -111,7 +111,7 @@ def cmdJoin(theArgs)
 	# Join the grids
 	puts "Joining #{numGrids}...";
 	
-	Cluster.joinGrids(theGrids);
+	Controller.joinGrids(theGrids);
 
 end
 
@@ -133,7 +133,7 @@ def cmdLeave(theArgs)
 	# Leave the grids
 	puts "Leaving #{numGrids}...";
 
-	Cluster.leaveGrids(theGrids);
+	Controller.leaveGrids(theGrids);
 
 end
 

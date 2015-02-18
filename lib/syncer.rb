@@ -115,9 +115,7 @@ def Syncer.start(theArgs)
 	FileUtils.mkpath(pathRoot);
 	IO.write(PATH_CONF, theConfig);
 
-	wasOK = system("rsync", "--daemon" , "--config=#{PATH_CONF}");
-
-	return(wasOK);
+	system("rsync", "--daemon" , "--config=#{PATH_CONF}");
 
 end
 

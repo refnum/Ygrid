@@ -122,8 +122,6 @@ def Cluster.start(theArgs)
 	Process.detach(thePID);
 
 	IO.write(PATH_PID, thePID);
-	
-	return(true);
 
 end
 
@@ -138,12 +136,10 @@ def Cluster.stop()
 
 	# Stop the server
 	if (Cluster.running?)
-	
 		Process.kill("SIGTERM", IO.read(PATH_PID).to_i);
 
 		FileUtils.rm(PATH_CONF);
 		FileUtils.rm(PATH_PID);
-
 	end
 
 end

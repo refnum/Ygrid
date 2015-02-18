@@ -1,10 +1,10 @@
 #!/usr/bin/ruby -w
 #==============================================================================
 #	NAME:
-#		controller.rb
+#		agent.rb
 #
 #	DESCRIPTION:
-#		ygrid controller.
+#		ygrid agent.
 #
 #	COPYRIGHT:
 #		Copyright (c) 2015, refNum Software
@@ -45,7 +45,6 @@
 #------------------------------------------------------------------------------
 require "xmlrpc/server";
 
-require_relative 'agent';
 require_relative 'cluster';
 require_relative 'syncer';
 
@@ -56,21 +55,26 @@ require_relative 'syncer';
 #==============================================================================
 # Module
 #------------------------------------------------------------------------------
-module Controller
+module Agent
+
+# Paths
+PATH_LOG = Utils.pathData("agent.log");
+PATH_PID = Utils.pathData("agent.pid");
+
 
 # Config
-START_TIMEOUT = 3;
+AGENT_PORT = 7956;
 
 
 
 
 
 #============================================================================
-#		Controller.running? : Is the system running?
+#		Agent.running? : Is the agent running?
 #----------------------------------------------------------------------------
-def Controller.running?
+def Agent.running?
 
-	return(Agent.running? && Cluster.running? && Syncer.running?)
+	return(Utils.cmdRunning?(PATH_PID));
 
 end
 
@@ -79,31 +83,32 @@ end
 
 
 #============================================================================
-#		Controller.start : Start the controller.
+#		Agent.start : Start the agent.
 #----------------------------------------------------------------------------
-def Controller.start(theArgs)
+def Agent.start(theArgs)
 
-	# Create our state
-	FileUtils.mkdir_p(Utils.pathData());
-
-
-
-	# Start the servers
-	Agent.start(  theArgs);
-	Syncer.start( theArgs);
-	Cluster.start(theArgs);
-
-
-
-	# Wait for them to start
-	endTime  = Time.now + START_TIMEOUT;
-
-	while Time.now < endTime
-		break if (Controller.running?)
-		sleep(0.2);
+	# Start the server
+	if (Utils.forkDaemon(PATH_LOG, PATH_PID))
+		Agent.runServer();
 	end
 
-	return(Controller.running?)
+end
+
+
+
+
+
+#============================================================================
+#		Agent.stop : Stop the agent.
+#----------------------------------------------------------------------------
+def Agent.stop()
+
+	# Stop the server
+	if (Agent.running?)
+		Process.kill("SIGTERM", IO.read(PATH_PID).to_i);
+
+		FileUtils.rm(PATH_PID);
+	end
 
 end
 
@@ -112,14 +117,22 @@ end
 
 
 #============================================================================
-#		Controller.stop : Stop the controller.
+#		Agent.runServer : Run the server.
 #----------------------------------------------------------------------------
-def Controller.stop()
+def Agent.runServer()
 
-	# Stop the servers
-	Cluster.stop();
-	Syncer.stop();
-	Agent.stop();
+	# Create the server
+	theServer = XMLRPC::Server.new(AGENT_PORT);
+
+	trap('SIGTERM') do
+		theServer.shutdown();
+		exit
+	end
+
+
+
+	# And run it
+	theServer.serve();
 
 end
 

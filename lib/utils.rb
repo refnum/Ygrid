@@ -344,22 +344,26 @@ end
 
 
 #============================================================================
-#		Utils.forkDaemon : Fork a daemon process.
+#		Utils.runDaemon : Run a block as a daemon.
 #----------------------------------------------------------------------------
-def Utils.forkDaemon(pathLog, pathPID)
+def Utils.runDaemon(pathLog, pathPID, &block)
 
 	# Fork the daemon
 	#
-	# Returns true to the daemon and false to the parent.
+	# We return to the parent, exit the intermediate process, and run the supplied
+	# block in the daemon process until done.
+	#
+	# stdout/stderr are redirected to the log file and a pidfile is maintained until
+	# the daemon finishes the block or receives an exception.
 	#
 	# Equivalent to Process.daemon, as per:
 	#
 	# 	http://www.jstorimer.com/blogs/workingwithcode/7766093-daemon-processes-in-ruby
 	#
-	return(false) if fork;
+	return if fork;
 
 	Process.setsid;
-    exit if fork;
+    exit() if fork;
 
     Dir.chdir("/");
     $stdin.reopen("/dev/null");
@@ -370,9 +374,17 @@ def Utils.forkDaemon(pathLog, pathPID)
 	$stderr.sync = true;
 
 	IO.write(pathPID, Process.pid);
-	at_exit { FileUtils.rm_f(pathPID) }
 
-    return(true);
+
+
+	# Execute the daemon
+	begin
+		block.call();
+	ensure
+		FileUtils.rm_f(pathPID);
+	end
+
+	exit();
 
 end
 

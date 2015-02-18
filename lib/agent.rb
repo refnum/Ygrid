@@ -87,10 +87,16 @@ end
 #----------------------------------------------------------------------------
 def Agent.start(theArgs)
 
+	# Get the state we need
+	abort("Agent already running!") if (Agent.running?);
+
+
+
 	# Start the server
-	if (Utils.forkDaemon(PATH_LOG, PATH_PID))
-		Agent.runServer();
+	Utils.runDaemon(PATH_LOG, PATH_PID) do
+		Agent.serve();
 	end
+
 
 end
 
@@ -104,8 +110,6 @@ end
 def Agent.stop()
 
 	# Stop the server
-	#
-	# Our daemon will delete its own pidfile when it exits.
 	if (Agent.running?)
 		Process.kill("SIGTERM", IO.read(PATH_PID).to_i);
 	end
@@ -117,18 +121,17 @@ end
 
 
 #============================================================================
-#		Agent.runServer : Run the server.
+#		Agent.serve : Run the server.
 #----------------------------------------------------------------------------
-def Agent.runServer()
+def Agent.serve()
 
 	# Create the server
 	theServer = XMLRPC::Server.new(AGENT_PORT);
 
 
 
-	# And run it
+	# Run until done
 	theServer.serve();
-	exit(0);
 
 end
 

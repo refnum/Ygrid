@@ -63,7 +63,7 @@ PATH_PID = Utils.pathData("agent.pid");
 
 
 # Config
-AGENT_PORT = 7956;
+AGENT_PORT = 7947;
 
 
 
@@ -104,10 +104,10 @@ end
 def Agent.stop()
 
 	# Stop the server
+	#
+	# Our daemon will delete its own pidfile when it exits.
 	if (Agent.running?)
 		Process.kill("SIGTERM", IO.read(PATH_PID).to_i);
-
-		FileUtils.rm(PATH_PID);
 	end
 
 end
@@ -124,15 +124,11 @@ def Agent.runServer()
 	# Create the server
 	theServer = XMLRPC::Server.new(AGENT_PORT);
 
-	trap('SIGTERM') do
-		theServer.shutdown();
-		exit
-	end
-
 
 
 	# And run it
 	theServer.serve();
+	exit(0);
 
 end
 

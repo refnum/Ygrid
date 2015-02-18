@@ -350,22 +350,29 @@ def Utils.forkDaemon(pathLog, pathPID)
 
 	# Fork the daemon
 	#
-	# Equivalent to Process.daemon except rather than exiting the parent we
-	# return true to the parent and false to the daemon.
+	# Returns true to the daemon and false to the parent.
 	#
-	# See http://www.jstorimer.com/blogs/workingwithcode/7766093-daemon-processes-in-ruby
-	return(true) if fork;
+	# Equivalent to Process.daemon, as per:
+	#
+	# 	http://www.jstorimer.com/blogs/workingwithcode/7766093-daemon-processes-in-ruby
+	#
+	return(false) if fork;
 
 	Process.setsid;
     exit if fork;
 
-    Dir.chdir "/";
-    STDIN.reopen  "/dev/null";
-    STDOUT.reopen pathLog, "a";
-    STDERR.reopen pathLog, "a";
-	IO.write(pathPID, Process.pid);
+    Dir.chdir("/");
+    $stdin.reopen("/dev/null");
 
-    return(false);
+    $stdout.reopen(pathLog, "a");
+    $stderr.reopen(pathLog, "a");
+	$stdout.sync = true;
+	$stderr.sync = true;
+
+	IO.write(pathPID, Process.pid);
+	at_exit { FileUtils.rm_f(pathPID) }
+
+    return(true);
 
 end
 

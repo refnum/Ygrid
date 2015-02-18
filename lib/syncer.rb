@@ -131,10 +131,9 @@ def Syncer.stop()
 	# Stop the server
 	if (Syncer.running?)
 		Process.kill("SIGTERM", IO.read(PATH_PID).to_i);
-
-		FileUtils.rm(PATH_CONF);
-		FileUtils.rm(PATH_PID);
 	end
+
+	FileUtils.rm_f(PATH_CONF);
 
 end
 

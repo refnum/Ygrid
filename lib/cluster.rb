@@ -137,10 +137,10 @@ def Cluster.stop()
 	# Stop the server
 	if (Cluster.running?)
 		Process.kill("SIGTERM", IO.read(PATH_PID).to_i);
-
-		FileUtils.rm(PATH_CONF);
-		FileUtils.rm(PATH_PID);
 	end
+
+	FileUtils.rm_f(PATH_CONF);
+	FileUtils.rm_f(PATH_PID);
 
 end
 

@@ -59,12 +59,19 @@ require_relative 'lib/utils';
 def cmdStart(theArgs)
 
 	# Start the server
-	puts "#{Controller.running? ? "Restarting" : "Starting"} ygrid server...";
+	puts "Starting ygrid server...";
+	theErrors = Controller.start(theArgs);
 
-	if (!Controller.start(theArgs))
+
+
+	# Handle failure
+	if (!theErrors.empty?)
 		puts "Unable to start server!";
-		
-		Controller.stop();
+
+		theErrors.each do |theError|
+			puts theError
+		end
+
 		exit(-1);
 	end
 
@@ -242,8 +249,8 @@ end
 #------------------------------------------------------------------------------
 def checkStatus(theCmd)
 	
-	if (!["start", "help"].include?(theCmd) && !Controller.running?)
-		puts "Start the ygrid server first!";
+	if (!["start", "stop", "help"].include?(theCmd) && !Controller.running?)
+		puts "No ygrid server running!";
 		exit(-1);
 	end
 

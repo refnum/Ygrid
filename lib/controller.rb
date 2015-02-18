@@ -66,11 +66,11 @@ START_TIMEOUT = 3;
 
 
 #============================================================================
-#		Controller.running? : Is the system running?
+#		Controller.running? : Is the controller running?
 #----------------------------------------------------------------------------
 def Controller.running?
 
-	return(Agent.running? && Cluster.running? && Syncer.running?)
+	return(Agent.running? && Syncer.running? && Cluster.running?)
 
 end
 
@@ -90,6 +90,8 @@ def Controller.start(theArgs)
 
 
 	# Start the servers
+	Controller.stop();
+
 	Agent.start(  theArgs);
 	Syncer.start( theArgs);
 	Cluster.start(theArgs);
@@ -97,14 +99,28 @@ def Controller.start(theArgs)
 
 
 	# Wait for them to start
-	endTime  = Time.now + START_TIMEOUT;
+	endTime   = Time.now + START_TIMEOUT;
+	theErrors = [];
+	
+	while (Time.now < endTime)
 
-	while Time.now < endTime
-		break if (Controller.running?)
+		theErrors.clear();	
+		theErrors << "  Unable to start agent"   if (!Agent.running?);
+		theErrors << "  Unable to start syncer"  if (!Syncer.running?);
+		theErrors << "  Unable to start cluster" if (!Cluster.running?);
+		break if (theErrors.empty?)
+
 		sleep(0.2);
 	end
 
-	return(Controller.running?)
+
+
+	# Handle failure
+	if (!theErrors.empty?)
+		Controller.stop();
+	end
+
+	return(theErrors);
 
 end
 
@@ -121,6 +137,13 @@ def Controller.stop()
 	Cluster.stop();
 	Syncer.stop();
 	Agent.stop();
+
+
+
+	# Wait for them to stop
+	while (Agent.running? || Syncer.running? || Cluster.running?)
+		sleep(0.2);
+	end
 
 end
 

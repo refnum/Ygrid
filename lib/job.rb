@@ -67,10 +67,10 @@ def Job.validate(theJob)
 	theErrors = [];
 	
 	if (!theJob.include?("task"))
-		theErrors << "Job is missing 'task'";
+		theErrors << "job is missing 'task'";
 	
 	elsif (theJob["task"].empty?)
-		theErrors << "Job has emtpy 'task'";
+		theErrors << "job has emtpy 'task'";
 	end
 
 	return(theErrors);

@@ -106,14 +106,12 @@ def Controller.start(theArgs)
 	theErrors = [];
 	
 	SERVERS.each do |theCmd|
-		theErrors << "  Unable to start #{theCmd}" if (!activeCmds.include?(theCmd));
-	end
-	
-	if (!theErrors.empty?)
-		Controller.stop();
+		theErrors << "Failed to start #{theCmd} server" if (!activeCmds.include?(theCmd));
 	end
 
-	return(theErrors);
+	Utils.failIfError("Unable to start ygrid:", theErrors) do
+		Controller.stop();
+	end
 
 end
 
@@ -174,12 +172,7 @@ def Controller.submitJob(theGrid, theFile)
 	theJob    = Utils.jsonLoad(theFile);
 	theErrors = Job.validate(theJob);
 
-	if (!theErrors.empty?)
-		puts "Unable to validate #{theFile}:";
-		theErrors.each do |theError|
-			puts "  #{theError}";
-		end
-	end
+	Utils.failIfError("Failed to submit #{File.basename(theFile)}:", theErrors);
 
 
 

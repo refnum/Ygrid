@@ -60,20 +60,8 @@ def cmdStart(theArgs)
 
 	# Start the server
 	puts "#{Controller.running? ? "Restarting" : "Starting"} ygrid server...";
-	theErrors = Controller.start(theArgs);
-
-
-
-	# Handle failure
-	if (!theErrors.empty?)
-		puts "Unable to start server!";
-
-		theErrors.each do |theError|
-			puts theError
-		end
-
-		exit(-1);
-	end
+	
+	Controller.start(theArgs);
 
 end
 
@@ -153,10 +141,9 @@ def cmdSubmit(theArgs)
 
 
 	# Submit the job
-	puts "Submitting #{File.basename(theFile)}...";
-	
 	theID = Controller.submitJob(theGrid, theFile);
-	puts theID;
+
+	puts "#{theID}";
 
 end
 

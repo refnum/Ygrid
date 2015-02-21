@@ -389,6 +389,33 @@ end
 
 
 
+#============================================================================
+#		Utils.failIfError : Fail if errors are found.
+#----------------------------------------------------------------------------
+def Utils.failIfError(theMsg, theErrors, &block)
+
+	# Handle failure
+	if (!theErrors.empty?)
+		# Show the errors
+		puts theMsg;
+	
+		theErrors.each do |theError|
+			puts "  #{theError}";
+		end
+
+
+		# Cleanup and quit
+		yield if block_given?;
+
+		exit(-1);
+	end
+
+end
+
+
+
+
+
 #==============================================================================
 # Module
 #------------------------------------------------------------------------------

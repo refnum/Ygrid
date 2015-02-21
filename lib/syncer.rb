@@ -43,8 +43,6 @@
 #==============================================================================
 # Imports
 #------------------------------------------------------------------------------
-require 'fileutils';
-
 require_relative 'daemon';
 require_relative 'utils';
 require_relative 'workspace';

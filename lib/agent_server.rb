@@ -82,7 +82,7 @@ def submitJob(theGrid, theJob)
 	theJob["grid"] = theGrid if (!theGrid.empty?);
 	theJob["id"]   = theID;
 
-	thePath = Workspace.pathJobsQueued() + "/#{theID}.job";
+	thePath = Workspace.pathJobs("queued/#{theID}.job");
 	Utils.jsonSave(thePath, theJob);
 
 	return(theID);

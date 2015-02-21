@@ -136,11 +136,11 @@ end
 
 
 #============================================================================
-#		Workspace.pathJobsQueued : Get a path to queued jobs folder.
+#		Workspace.pathJobs : Get a path to a job item.
 #----------------------------------------------------------------------------
-def Workspace.pathJobsQueued
+def Workspace.pathJobs(thePath="")
 
-	return(Workspace.path("jobs/queued"));
+	return(Workspace.path("jobs/#{thePath}"));
 
 end
 

@@ -60,9 +60,8 @@ require_relative 'workspace';
 #------------------------------------------------------------------------------
 module Controller
 
-# Config
-SERVER_TIMEOUT = 3;
-SERVER_CMDS    = ["agent", "cluster", "syncer"];
+# Servers
+SERVERS = ["agent", "cluster", "syncer"];
 
 
 
@@ -73,7 +72,7 @@ SERVER_CMDS    = ["agent", "cluster", "syncer"];
 #----------------------------------------------------------------------------
 def Controller.running?
 
-	return(Daemon.waitFor(0, SERVER_CMDS).size == SERVER_CMDS.size);
+	return(Daemon.waitFor(0, SERVERS).size == SERVERS.size);
 
 end
 
@@ -98,14 +97,14 @@ def Controller.start(theArgs)
 	Syncer.start( theArgs);
 	Cluster.start(theArgs);
 
-	activeCmds = Daemon.waitFor(SERVER_TIMEOUT, SERVER_CMDS);
+	activeCmds = Daemon.waitFor(Daemon::TIMEOUT, SERVERS);
 
 
 
 	# Handle failure
 	theErrors = [];
 	
-	SERVER_CMDS.each do |theCmd|
+	SERVERS.each do |theCmd|
 		theErrors << "  Unable to start #{theCmd}" if (!activeCmds.include?(theCmd));
 	end
 	
@@ -127,7 +126,7 @@ end
 def Controller.stop()
 
 	# Stop the servers
-	Daemon.stop(SERVER_CMDS);
+	Daemon.stop(SERVERS);
 
 	Workspace.cleanup();
 

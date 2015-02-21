@@ -43,6 +43,8 @@
 #==============================================================================
 # Imports
 #------------------------------------------------------------------------------
+require 'fileutils';
+
 require 'json';
 require 'ipaddr';
 require 'socket';
@@ -353,7 +355,13 @@ end
 #----------------------------------------------------------------------------
 def Utils.jsonSave(theFile, theState)
 
-	return(IO.write(theFile, JSON.pretty_generate(theState)));
+	# Save the file
+	#
+	# We save to a temporary first then rename to ensure the write is atomic.
+	tmpFile = theFile + "_tmp";
+
+	IO.write(    tmpFile, JSON.pretty_generate(theState));
+	FileUtils.mv(tmpFile, theFile);
 
 end
 

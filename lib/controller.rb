@@ -48,6 +48,7 @@ require "xmlrpc/server";
 require_relative 'agent';
 require_relative 'cluster';
 require_relative 'syncer';
+require_relative 'workspace';
 
 
 
@@ -83,15 +84,14 @@ end
 #----------------------------------------------------------------------------
 def Controller.start(theArgs)
 
-	# Get the state we need
-	FileUtils.mkpath(Utils.pathData());
-	FileUtils.mkpath(theArgs["root"]);
+	# Prepare to start
+	Controller.stop();
+
+	Workspace.create(theArgs["root"]);
 
 
 
 	# Start the servers
-	Controller.stop();
-
 	Agent.start(  theArgs);
 	Syncer.start( theArgs);
 	Cluster.start(theArgs);
@@ -144,6 +144,11 @@ def Controller.stop()
 	while (Agent.running? || Syncer.running? || Cluster.running?)
 		sleep(0.2);
 	end
+
+
+
+	# Clean up
+	Workspace.cleanup();
 
 end
 

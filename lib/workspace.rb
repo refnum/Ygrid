@@ -1,10 +1,10 @@
 #!/usr/bin/ruby -w
 #==============================================================================
 #	NAME:
-#		syncer.rb
+#		workspace.rb
 #
 #	DESCRIPTION:
-#		Rsync-based syncer.
+#		Workspace modeul.
 #
 #	COPYRIGHT:
 #		Copyright (c) 2015, refNum Software
@@ -45,9 +45,6 @@
 #------------------------------------------------------------------------------
 require 'fileutils';
 
-require_relative 'utils';
-require_relative 'workspace';
-
 
 
 
@@ -55,88 +52,117 @@ require_relative 'workspace';
 #==============================================================================
 # Module
 #------------------------------------------------------------------------------
-module Syncer
+module Workspace
 
-# Config
-CONFIG_FILE = <<CONFIG_FILE
-log file  = TOKEN_PATH_LOG
-pid file  = TOKEN_PATH_PID
-
-port       = 7948
-use chroot = no
-list       = no
-read only  = no
-
-[ygrid]
-path = TOKEN_PATH_ROOT
-
-CONFIG_FILE
+# Paths
+PATH_DEFAULT = "/tmp/ygrid";
+PATH_LINK    = "/tmp/ygrid/root";
 
 
 
 
 
 #============================================================================
-#		Syncer.running? : Is the syncer running?
+#		Workspace.create : Create the workspace.
 #----------------------------------------------------------------------------
-def Syncer.running?
-
-	return(Utils.cmdRunning?(Workspace.pathPID("syncer")));
-
-end
-
-
-
-
-
-#============================================================================
-#		Syncer.start : Start the syncer.
-#----------------------------------------------------------------------------
-def Syncer.start(theArgs)
+def Workspace.create(theRoot)
 
 	# Get the state we need
-	theConfig = CONFIG_FILE.dup;
-
-	pathConfig = Workspace.pathConfig("syncer");
-	pathLog    = Workspace.pathLog(   "syncer");
-	pathPID    = Workspace.pathPID(   "syncer");
-
-	theConfig.gsub!("TOKEN_PATH_LOG",  pathLog);
-	theConfig.gsub!("TOKEN_PATH_PID",  pathPID);
-	theConfig.gsub!("TOKEN_PATH_ROOT", theArgs["root"]);
-
-	abort("Syncer already running!") if (Syncer.running?);
-
-
-
-	# Start the server
-	IO.write(pathConfig, theConfig);
-
-	system("rsync", "--daemon", "--config=#{pathConfig}");
-
-end
-
-
-
-
-
-#============================================================================
-#		Syncer.stop : Stop the syncer.
-#----------------------------------------------------------------------------
-def Syncer.stop()
-
-	# Get the state we need
-	pathConfig = Workspace.pathConfig("syncer");
-	pathPID    = Workspace.pathPID(   "syncer");
-
-
-
-	# Stop the server
-	if (Syncer.running?)
-		Process.kill("SIGTERM", IO.read(pathPID).to_i);
+	if (theRoot.empty?)
+		theRoot = PATH_DEFAULT;
 	end
 
-	FileUtils.rm_f(pathConfig);
+
+
+	# Create the link
+	#
+	# We create a link to the root at a fixed path so we can find it later.
+	FileUtils.mkdir_p(theRoot);
+	FileUtils.mkdir_p(File.dirname(PATH_LINK));
+	FileUtils.ln_s(theRoot, PATH_LINK);
+
+
+
+	# Create the workspace
+	FileUtils.mkdir_p(Workspace.path("jobs/queued"));
+	FileUtils.mkdir_p(Workspace.path("jobs/active"));
+	FileUtils.mkdir_p(Workspace.path("jobs/completed"));
+
+	FileUtils.mkdir_p(Workspace.path("data"));
+
+	FileUtils.mkdir_p(Workspace.path("run"));
+
+end
+
+
+
+
+
+#============================================================================
+#		Workspace.cleanup : Clean up the workspace
+#----------------------------------------------------------------------------
+def Workspace.cleanup
+
+	# Remove the link
+	FileUtils.rm_f(PATH_LINK);
+
+end
+
+
+
+
+
+#============================================================================
+#		Workspace.path : Get a path.
+#----------------------------------------------------------------------------
+def Workspace.path(thePath)
+
+	if (File.exists?(PATH_LINK))
+		theRoot = File.realpath(PATH_LINK);
+	else
+		theRoot = PATH_DEFAULT;
+	end
+
+	return(theRoot + "/" + thePath);
+
+end
+
+
+
+
+
+#============================================================================
+#		Workspace.pathConfig : Get a path to a config file.
+#----------------------------------------------------------------------------
+def Workspace.pathConfig(theName)
+
+	return(Workspace.path("run/#{theName}.config"));
+
+end
+
+
+
+
+
+#============================================================================
+#		Workspace.pathLog : Get a path to a logfile.
+#----------------------------------------------------------------------------
+def Workspace.pathLog(theName)
+
+	return(Workspace.path("run/#{theName}.log"));
+
+end
+
+
+
+
+
+#============================================================================
+#		Workspace.pathPID : Get a path to a pidfile.
+#----------------------------------------------------------------------------
+def Workspace.pathPID(theName)
+
+	return(Workspace.path("run/#{theName}.pid"));
 
 end
 

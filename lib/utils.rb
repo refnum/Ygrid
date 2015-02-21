@@ -58,9 +58,6 @@ require 'rbconfig';
 #------------------------------------------------------------------------------
 module Utils
 
-# Paths
-PATH_RUNTIME = "/tmp/ygrid";
-
 
 
 
@@ -316,7 +313,7 @@ def Utils.getArguments
 	case theArgs["cmd"]
 		when "start"
 			if (theArgs["root"].empty?)
-				theArgs["cmd"] = "help";
+				theArgs["root"] = "/tmp/ygrid";
 			end
 		
 		when "join", "leave"
@@ -326,19 +323,6 @@ def Utils.getArguments
 	end
 	
 	return(theArgs);
-
-end
-
-
-
-
-
-#============================================================================
-#		Utils.pathData : Get a path to our runtime data.
-#----------------------------------------------------------------------------
-def Utils.pathData(theChild="")
-
-	return(PATH_RUNTIME + "/" + theChild);
 
 end
 

@@ -46,6 +46,7 @@
 require 'json';
 
 require_relative 'utils';
+require_relative 'workspace';
 
 
 
@@ -55,12 +56,6 @@ require_relative 'utils';
 # Module
 #------------------------------------------------------------------------------
 module Cluster
-
-# Paths
-PATH_CONF = Utils.pathData("cluster.conf");
-PATH_LOG  = Utils.pathData("cluster.log");
-PATH_PID  = Utils.pathData("cluster.pid");
-
 
 # Config
 CONFIG_FILE = <<CONFIG_FILE
@@ -87,7 +82,7 @@ CONFIG_FILE
 #----------------------------------------------------------------------------
 def Cluster.running?
 
-	return(Utils.cmdRunning?(PATH_PID));
+	return(Utils.cmdRunning?(Workspace.pathPID("cluster")));
 
 end
 
@@ -104,6 +99,10 @@ def Cluster.start(theArgs)
 	theConfig = CONFIG_FILE.dup;
 	theGrids  = theArgs["grids"].split(",").sort.uniq.join(",");
 
+	pathConfig = Workspace.pathConfig("cluster");
+	pathLog    = Workspace.pathLog(   "cluster");
+	pathPID    = Workspace.pathPID(   "cluster");
+
 	theConfig.gsub!("TOKEN_HOST_OS",    Utils.hostOS());
 	theConfig.gsub!("TOKEN_HOST_CPUS",  Utils.cpuCount());
 	theConfig.gsub!("TOKEN_HOST_SPEED", Utils.cpuGHz());
@@ -116,12 +115,12 @@ def Cluster.start(theArgs)
 
 
 	# Start the server
-	IO.write(PATH_CONF, theConfig);
+	IO.write(pathConfig, theConfig);
 
-	thePID = Process.spawn("serf agent -config-file=\"#{PATH_CONF}\"", [:out, :err]=>[PATH_LOG, "w"])
+	thePID = Process.spawn("serf agent -config-file=\"#{pathConfig}\"", [:out, :err]=>[pathLog, "w"])
 	Process.detach(thePID);
 
-	IO.write(PATH_PID, thePID);
+	IO.write(pathPID, thePID);
 
 end
 
@@ -134,13 +133,19 @@ end
 #----------------------------------------------------------------------------
 def Cluster.stop()
 
+	# Get the state we need
+	pathConfig = Workspace.pathConfig("cluster");
+	pathPID    = Workspace.pathPID(   "cluster");
+
+
+
 	# Stop the server
 	if (Cluster.running?)
-		Process.kill("SIGTERM", IO.read(PATH_PID).to_i);
+		Process.kill("SIGTERM", IO.read(pathPID).to_i);
 	end
 
-	FileUtils.rm_f(PATH_CONF);
-	FileUtils.rm_f(PATH_PID);
+	FileUtils.rm_f(pathConfig);
+	FileUtils.rm_f(pathPID);
 
 end
 

@@ -43,6 +43,7 @@
 #==============================================================================
 # Imports
 #------------------------------------------------------------------------------
+require_relative 'job';
 require_relative 'utils';
 require_relative 'workspace';
 
@@ -55,9 +56,6 @@ require_relative 'workspace';
 #------------------------------------------------------------------------------
 class AgentServer
 
-# Globals
-@@nextID = 1;
-
 
 
 
@@ -67,25 +65,52 @@ class AgentServer
 #------------------------------------------------------------------------------
 def submitJob(theGrid, theJob)
 
-	# Allocate the ID
-	theID    = @@nextID;
-	@@nextID = @@nextID + 1;
+	# Prepare the job
+	theID = Job.encodeID(Utils.localIP(), nextIndex);
 
-
-
-	# Generate the job ID
-	theID = ("%08X" % theID) +  Utils.localIP(true);
+	theJob["grid"] = theGrid if (!theGrid.empty?);
+	theJob["id"]   = theID;
 
 
 
 	# Save the job
-	theJob["grid"] = theGrid if (!theGrid.empty?);
-	theJob["id"]   = theID;
-
 	thePath = Workspace.pathJobs("queued/#{theID}.job");
 	Utils.jsonSave(thePath, theJob);
 
 	return(theID);
+
+end
+
+
+
+
+
+#==============================================================================
+#		AgentServer::nextIndex : Allocate the next job index.
+#------------------------------------------------------------------------------
+def nextIndex
+
+	# Get the last index
+	theFile = Workspace.pathJobs("last.idx");
+
+	if (File.exists?(theFile))
+		theIndex = IO.read(theFile).to_i;
+	else
+		theIndex = 0;
+	end
+
+
+
+	# Get the next index
+	theIndex = theIndex + 1;
+
+	if (theIndex >= 0xFFFFFFFF)
+		theIndex = 1;
+	end
+
+	IO.write(theFile, theIndex);
+
+	return(theIndex);
 
 end
 

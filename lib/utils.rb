@@ -364,7 +364,7 @@ end
 #============================================================================
 #		Utils.localIP : Get the local IP address.
 #----------------------------------------------------------------------------
-def Utils.localIP(asHex=false)
+def Utils.localIP()
 
 	# Get the first IPv4 address info
 	theList = Socket.ip_address_list;
@@ -375,11 +375,7 @@ def Utils.localIP(asHex=false)
 
 
 	# Get the IP address
-	theIP = theInfo.ip_address;
-	
-	if (asHex)
-		theIP = "%08X" % IPAddr.new(theIP).to_i;
-	end
+	theIP = IPAddr.new(theInfo.ip_address);
 
 	return(theIP);
 

@@ -49,6 +49,7 @@ require "xmlrpc/server";
 require_relative 'agent_server';
 require_relative 'daemon';
 require_relative 'utils';
+require_relative 'workspace';
 
 
 
@@ -61,6 +62,7 @@ module Agent
 
 # Config
 AGENT_PORT = 7947;
+QUEUE_POLL = 1.5;
 
 
 
@@ -78,6 +80,7 @@ def Agent.start(theArgs)
 
 	# Start the server
 	Daemon.start("agent") do
+		Agent.startScheduler();
 		Agent.startServer();
 	end
 
@@ -97,6 +100,89 @@ def Agent.submitJob(theGrid, theJob)
 
 	return(theID);
 
+end
+
+
+
+
+
+#============================================================================
+#		Agent.startScheduler : Start the scheduler.
+#----------------------------------------------------------------------------
+def Agent.startScheduler()
+
+	# Start the scheduler
+	Thread.new do
+		loop do
+			pathJob = getNextJob();
+			theHost = getBestHost();
+
+			scheduleJob(pathJob, theHost);
+		end
+	end
+
+end
+
+
+
+
+
+#============================================================================
+#		Agent.startServer : Start the server.
+#----------------------------------------------------------------------------
+def Agent.startServer()
+
+	# Create the server
+	theServer = XMLRPC::Server.new(AGENT_PORT);
+	theServer.add_handler(XMLRPC::iPIMethods("ygrid"), AgentServer.new)
+
+
+	# Run until done
+	theServer.serve();
+
+end
+
+
+
+
+
+#============================================================================
+#		Agent.getNextJob : Get the next job.
+#----------------------------------------------------------------------------
+def Agent.getNextJob
+
+	# Wait for a job
+	loop do
+		theFiles = Dir.glob(Workspace.pathJobs("queued/*.job"));
+		return(theFiles[0]) if (!theFiles.empty?);
+
+		sleep(QUEUE_POLL);
+	end
+
+end
+
+
+
+
+
+#============================================================================
+#		Agent.getBestHost : Get the best host.
+#----------------------------------------------------------------------------
+def Agent.getBestHost
+	# todo
+	abort("Agent.getBestHost - todo");
+end
+
+
+
+
+
+#============================================================================
+#		Agent.scheduleJob : Schedule a job.
+#----------------------------------------------------------------------------
+def Agent.scheduleJob(pathJob, theHost)
+	# todo
+	abort("Agent.scheduleJob - todo");
 end
 
 
@@ -136,26 +222,6 @@ def Agent.callServer(theHost, theCmd, *theArgs)
 	return(theResult);
 
 end
-
-
-
-
-
-#============================================================================
-#		Agent.startServer : Start the server.
-#----------------------------------------------------------------------------
-def Agent.startServer()
-
-	# Create the server
-	theServer = XMLRPC::Server.new(AGENT_PORT);
-	theServer.add_handler(XMLRPC::iPIMethods("ygrid"), AgentServer.new)
-
-
-	# Run until done
-	theServer.serve();
-
-end
-
 
 
 

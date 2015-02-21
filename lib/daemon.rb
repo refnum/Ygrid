@@ -54,6 +54,9 @@ require_relative 'workspace';
 #------------------------------------------------------------------------------
 module Daemon
 
+# Timeout
+TIMEOUT = 2;
+
 
 
 
@@ -139,7 +142,10 @@ def Daemon.start(theCmd, &block)
 	#
 	# 	http://www.jstorimer.com/blogs/workingwithcode/7766093-daemon-processes-in-ruby
 	#
-	return if fork;
+	if fork
+		Daemon.waitFor(TIMEOUT, [theCmd]);
+		return;
+	end
 
 	Process.setsid;
     exit() if fork;

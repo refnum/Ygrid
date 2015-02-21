@@ -1,10 +1,10 @@
 #!/usr/bin/ruby -w
 #==============================================================================
 #	NAME:
-#		cluster.rb
+#		daemon.rb
 #
 #	DESCRIPTION:
-#		Serf-based cluster.
+#		Daemon module.
 #
 #	COPYRIGHT:
 #		Copyright (c) 2015, refNum Software
@@ -43,10 +43,6 @@
 #==============================================================================
 # Imports
 #------------------------------------------------------------------------------
-require 'json';
-
-require_relative 'daemon';
-require_relative 'utils';
 require_relative 'workspace';
 
 
@@ -56,100 +52,31 @@ require_relative 'workspace';
 #==============================================================================
 # Module
 #------------------------------------------------------------------------------
-module Cluster
-
-# Config
-CONFIG_FILE = <<CONFIG_FILE
-{
-    "discover" : "ygrid",
-
-    "tags" : {
-        "os"    : "TOKEN_HOST_OS",
-        "cpu"   : "TOKEN_HOST_CPUS",
-        "ghz"   : "TOKEN_HOST_SPEED",
-        "mem"   : "TOKEN_HOST_MEM",
-        "load"  : "TOKEN_HOST_LOAD",
-        "grids" : "TOKEN_GRIDS"
-    }
-}
-CONFIG_FILE
+module Daemon
 
 
 
 
 
 #============================================================================
-#		Cluster.start : Start the cluster.
+#		Daemon.running? : Is a daemon running?
 #----------------------------------------------------------------------------
-def Cluster.start(theArgs)
+def Daemon.running?(theCmd)
 
 	# Get the state we need
-	theConfig = CONFIG_FILE.dup;
-	theGrids  = theArgs["grids"].split(",").sort.uniq.join(",");
-
-	pathConfig = Workspace.pathConfig("cluster");
-	pathLog    = Workspace.pathLog(   "cluster");
-
-	theConfig.gsub!("TOKEN_HOST_OS",    Utils.hostOS());
-	theConfig.gsub!("TOKEN_HOST_CPUS",  Utils.cpuCount());
-	theConfig.gsub!("TOKEN_HOST_SPEED", Utils.cpuGHz());
-	theConfig.gsub!("TOKEN_HOST_MEM",   Utils.memGB());
-	theConfig.gsub!("TOKEN_HOST_LOAD",  Utils.sysLoad());
-	theConfig.gsub!("TOKEN_GRIDS",      theGrids);
-
-	abort("Cluster already running!") if (Daemon.running?("cluster"));
+	pathPID = Workspace.pathPID(theCmd);
 
 
 
-	# Start the server
-	IO.write(pathConfig, theConfig);
-
-	thePID = Process.spawn("serf agent -config-file=\"#{pathConfig}\"", [:out, :err]=>[pathLog, "w"])
-	Process.detach(thePID);
-
-	Daemon.started("cluster", thePID);
-
-end
-
-
-
-
-
-#============================================================================
-#		Cluster.joinGrids : Join some grids.
-#----------------------------------------------------------------------------
-def Cluster.joinGrids(theGrids)
-
-	# Calculate the new grids
-	newGrids = getGrids().concat(theGrids);
-
-
-
-	# Update our state	
-	setGrids(newGrids);
-
-end
-
-
-
-
-
-#============================================================================
-#		Cluster.leaveGrids : Leave some grids.
-#----------------------------------------------------------------------------
-def Cluster.leaveGrids(theGrids)
-
-	# Calculate the new grids
-	newGrids = getGrids();
-	
-	theGrids.each do |theGrid|
-		newGrids.delete(theGrid);
+	# Check the state
+	if (File.exists?(pathPID))
+		thePID    = IO.read(pathPID).to_i;
+		isRunning = system("ps -p #{thePID} > /dev/null");
+	else
+		isRunning = false;
 	end
 
-
-
-	# Update our state	
-	setGrids(newGrids);
+	return(isRunning);
 
 end
 
@@ -158,21 +85,31 @@ end
 
 
 #============================================================================
-#		Cluster.gridStatus : Get the status of a grid.
+#		Daemon.waitFor : Wait for daemons to exist.
 #----------------------------------------------------------------------------
-def Cluster.gridStatus(theGrid)
+def Daemon.waitFor(theTimeout, theCmds)
 
 	# Get the state we need
-	if (!theGrid.empty?)
-		theGrid = "-tag grid=\btheGrid\b";
+	endTime    = Time.now + theTimeout;
+	activeCmds = [];
+
+
+
+	# Wait for them to exist
+	while (Time.now <= endTime)
+
+		activeCmds.clear();
+
+		theCmds.each do |theCmd|
+			activeCmds << theCmd if (Daemon.running?(theCmd));
+		end
+
+		break      if (activeCmds.size == theCmds.size);
+		sleep(0.2) if (theTimeout != 0);
+
 	end
 
-
-
-	# Get the status
-	theStatus = JSON.parse(`serf members #{theGrid} -format=json`);
-
-	return(theStatus);
+	return(activeCmds);
 
 end
 
@@ -181,14 +118,88 @@ end
 
 
 #============================================================================
-#		Cluster.getGrids : Get the grids we particpate in.
+#		Daemon.start : Start a daemon to run a block.
 #----------------------------------------------------------------------------
-def Cluster.getGrids()
+def Daemon.start(theCmd, &block)
 
-	theInfo  = JSON.parse(`serf info -format=json`);
-	theGrids = theInfo["tags"]["grids"].split(",");
+	# Get the state we need
+	pathLog = Workspace.pathLog(theCmd);
 
-	return(theGrids);
+
+
+	# Fork the daemon
+	#
+	# We return to the parent, exit the intermediate process, and run the supplied
+	# block in the daemon process until done.
+	#
+	# stdout/stderr are redirected to the log file and a pidfile is maintained until
+	# the daemon finishes the block or receives an exception.
+	#
+	# Equivalent to Process.daemon, as per:
+	#
+	# 	http://www.jstorimer.com/blogs/workingwithcode/7766093-daemon-processes-in-ruby
+	#
+	return if fork;
+
+	Process.setsid;
+    exit() if fork;
+
+    Dir.chdir("/");
+    $stdin.reopen("/dev/null");
+
+    $stdout.reopen(pathLog, "a");
+    $stderr.reopen(pathLog, "a");
+	$stdout.sync = true;
+	$stderr.sync = true;
+
+	Daemon.started(theCmd, Process.pid);
+
+
+
+	# Execute the daemon
+	begin
+		block.call();
+	ensure
+		Daemon.stopped(theCmd);
+	end
+
+	exit();
+
+end
+
+
+
+
+
+
+#============================================================================
+#		Daemon.stop : Stop a daemon.
+#----------------------------------------------------------------------------
+def Daemon.stop(theCmds)
+
+	# Stop the daemons
+	theCmds.each do |theCmd|
+		if (Daemon.running?(theCmd))
+			pathPID = Workspace.pathPID(theCmd);
+			Process.kill("SIGTERM", IO.read(pathPID).to_i);
+		end
+	end
+
+
+
+	# Wait for them to stop
+	loop do
+		activeCmds = Daemon.waitFor(0, theCmds);
+		break if (activeCmds.empty?)
+		sleep(0.2);
+	end
+
+
+
+	# Clean up
+	theCmds.each do |theCmd|
+		Daemon.stopped(theCmd);
+	end
 
 end
 
@@ -197,16 +208,30 @@ end
 
 
 #============================================================================
-#		Cluster.setGrids : Set the grids we particpate in.
+#		Daemon.started : A daemon has started.
 #----------------------------------------------------------------------------
-def Cluster.setGrids(theGrids)
+def Daemon.started(theCmd, thePID)
 
-	theGrids = theGrids.sort.uniq.join(",");
-	theLog   = `serf tags -set grids=#{theGrids}`.chomp;
+	# Create the pidfile
+	pathPID = Workspace.pathPID(theCmd);
 
-	if (theLog != "Successfully updated agent tags")
-		puts "ERROR - Unable to set tags: #{theLog}";
-	end
+	IO.write(pathPID, thePID);
+
+end
+
+
+
+
+
+#============================================================================
+#		Daemon.stopped : A daemon has stopped.
+#----------------------------------------------------------------------------
+def Daemon.stopped(theCmd)
+
+	# Remove the pidfile
+	pathPID = Workspace.pathPID(theCmd);
+
+	FileUtils.rm_f(pathPID);
 
 end
 

@@ -103,7 +103,11 @@ end
 #----------------------------------------------------------------------------
 def Workspace.cleanup
 
-	# Remove the link
+	# Clean up our files
+	#
+	# Logfiles are kept, pidfiles are deleted as daemons are stopped,
+	# but the config files from this session can be removed.
+	FileUtils.rm_f(Dir.glob(Workspace.path("run") + "/*cfg"));
 	FileUtils.rm_f(PATH_LINK);
 
 end
@@ -136,7 +140,7 @@ end
 #----------------------------------------------------------------------------
 def Workspace.pathConfig(theName)
 
-	return(Workspace.path("run/#{theName}.config"));
+	return(Workspace.path("run/#{theName}.cfg"));
 
 end
 

@@ -47,6 +47,7 @@ require "xmlrpc/server";
 
 require_relative 'agent';
 require_relative 'cluster';
+require_relative 'daemon';
 require_relative 'syncer';
 require_relative 'workspace';
 
@@ -60,7 +61,8 @@ require_relative 'workspace';
 module Controller
 
 # Config
-START_TIMEOUT = 3;
+SERVER_TIMEOUT = 3;
+SERVER_CMDS    = ["agent", "cluster", "syncer"];
 
 
 
@@ -71,7 +73,7 @@ START_TIMEOUT = 3;
 #----------------------------------------------------------------------------
 def Controller.running?
 
-	return(Agent.running? && Syncer.running? && Cluster.running?)
+	return(Daemon.waitFor(0, SERVER_CMDS).size == SERVER_CMDS.size);
 
 end
 
@@ -96,26 +98,17 @@ def Controller.start(theArgs)
 	Syncer.start( theArgs);
 	Cluster.start(theArgs);
 
-
-
-	# Wait for them to start
-	endTime   = Time.now + START_TIMEOUT;
-	theErrors = [];
-	
-	while (Time.now < endTime)
-
-		theErrors.clear();	
-		theErrors << "  Unable to start agent"   if (!Agent.running?);
-		theErrors << "  Unable to start syncer"  if (!Syncer.running?);
-		theErrors << "  Unable to start cluster" if (!Cluster.running?);
-		break if (theErrors.empty?)
-
-		sleep(0.2);
-	end
+	activeCmds = Daemon.waitFor(SERVER_TIMEOUT, SERVER_CMDS);
 
 
 
 	# Handle failure
+	theErrors = [];
+	
+	SERVER_CMDS.each do |theCmd|
+		theErrors << "  Unable to start #{theCmd}" if (!activeCmds.include?(theCmd));
+	end
+	
 	if (!theErrors.empty?)
 		Controller.stop();
 	end
@@ -134,20 +127,8 @@ end
 def Controller.stop()
 
 	# Stop the servers
-	Cluster.stop();
-	Syncer.stop();
-	Agent.stop();
+	Daemon.stop(SERVER_CMDS);
 
-
-
-	# Wait for them to stop
-	while (Agent.running? || Syncer.running? || Cluster.running?)
-		sleep(0.2);
-	end
-
-
-
-	# Clean up
 	Workspace.cleanup();
 
 end

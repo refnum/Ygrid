@@ -45,6 +45,7 @@
 #------------------------------------------------------------------------------
 require 'fileutils';
 
+require_relative 'daemon';
 require_relative 'utils';
 require_relative 'workspace';
 
@@ -77,19 +78,6 @@ CONFIG_FILE
 
 
 #============================================================================
-#		Syncer.running? : Is the syncer running?
-#----------------------------------------------------------------------------
-def Syncer.running?
-
-	return(Utils.cmdRunning?(Workspace.pathPID("syncer")));
-
-end
-
-
-
-
-
-#============================================================================
 #		Syncer.start : Start the syncer.
 #----------------------------------------------------------------------------
 def Syncer.start(theArgs)
@@ -105,7 +93,7 @@ def Syncer.start(theArgs)
 	theConfig.gsub!("TOKEN_PATH_PID",  pathPID);
 	theConfig.gsub!("TOKEN_PATH_ROOT", theArgs["root"]);
 
-	abort("Syncer already running!") if (Syncer.running?);
+	abort("Syncer already running!") if (Daemon.running?("syncer"));
 
 
 
@@ -113,30 +101,6 @@ def Syncer.start(theArgs)
 	IO.write(pathConfig, theConfig);
 
 	system("rsync", "--daemon", "--config=#{pathConfig}");
-
-end
-
-
-
-
-
-#============================================================================
-#		Syncer.stop : Stop the syncer.
-#----------------------------------------------------------------------------
-def Syncer.stop()
-
-	# Get the state we need
-	pathConfig = Workspace.pathConfig("syncer");
-	pathPID    = Workspace.pathPID(   "syncer");
-
-
-
-	# Stop the server
-	if (Syncer.running?)
-		Process.kill("SIGTERM", IO.read(pathPID).to_i);
-	end
-
-	FileUtils.rm_f(pathConfig);
 
 end
 

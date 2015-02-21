@@ -206,26 +206,6 @@ end
 
 
 #============================================================================
-#		Utils.cmdRunning? : Is a command running?
-#----------------------------------------------------------------------------
-def Utils.cmdRunning?(pidFile)
-
-	if (File.exists?(pidFile))
-		thePID    = IO.read(pidFile).to_i;
-		isRunning = system("ps -p #{thePID} > /dev/null");
-	else
-		isRunning = false;
-	end
-	
-	return(isRunning);
-
-end
-
-
-
-
-
-#============================================================================
 #		Utils.checkInstall : Check the installation.
 #----------------------------------------------------------------------------
 def Utils.checkInstall
@@ -323,55 +303,6 @@ def Utils.getArguments
 	end
 	
 	return(theArgs);
-
-end
-
-
-
-
-
-#============================================================================
-#		Utils.runDaemon : Run a block as a daemon.
-#----------------------------------------------------------------------------
-def Utils.runDaemon(pathLog, pathPID, &block)
-
-	# Fork the daemon
-	#
-	# We return to the parent, exit the intermediate process, and run the supplied
-	# block in the daemon process until done.
-	#
-	# stdout/stderr are redirected to the log file and a pidfile is maintained until
-	# the daemon finishes the block or receives an exception.
-	#
-	# Equivalent to Process.daemon, as per:
-	#
-	# 	http://www.jstorimer.com/blogs/workingwithcode/7766093-daemon-processes-in-ruby
-	#
-	return if fork;
-
-	Process.setsid;
-    exit() if fork;
-
-    Dir.chdir("/");
-    $stdin.reopen("/dev/null");
-
-    $stdout.reopen(pathLog, "a");
-    $stderr.reopen(pathLog, "a");
-	$stdout.sync = true;
-	$stderr.sync = true;
-
-	IO.write(pathPID, Process.pid);
-
-
-
-	# Execute the daemon
-	begin
-		block.call();
-	ensure
-		FileUtils.rm_f(pathPID);
-	end
-
-	exit();
 
 end
 

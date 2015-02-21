@@ -46,10 +46,8 @@
 require "xmlrpc/client";
 require "xmlrpc/server";
 
-require_relative 'cluster';
-require_relative 'syncer';
+require_relative 'daemon';
 require_relative 'utils';
-require_relative 'workspace';
 
 
 
@@ -111,55 +109,18 @@ end
 
 
 #============================================================================
-#		Agent.running? : Is the agent running?
-#----------------------------------------------------------------------------
-def Agent.running?
-
-	return(Utils.cmdRunning?(Workspace.pathPID("agent")));
-
-end
-
-
-
-
-
-#============================================================================
 #		Agent.start : Start the agent.
 #----------------------------------------------------------------------------
 def Agent.start(theArgs)
 
 	# Get the state we need
-	pathLog = Workspace.pathLog("agent");
-	pathPID = Workspace.pathPID("agent");
-
-	abort("Agent already running!") if (Agent.running?);
+	abort("Agent already running!") if (Daemon.running?("agent"));
 
 
 
 	# Start the server
-	Utils.runDaemon(pathLog, pathPID) do
+	Daemon.start("agent") do
 		Agent.serve();
-	end
-
-end
-
-
-
-
-
-#============================================================================
-#		Agent.stop : Stop the agent.
-#----------------------------------------------------------------------------
-def Agent.stop()
-
-	# Get the state we need
-	pathPID = Workspace.pathPID("agent");
-
-
-
-	# Stop the server
-	if (Agent.running?)
-		Process.kill("SIGTERM", IO.read(pathPID).to_i);
 	end
 
 end

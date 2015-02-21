@@ -43,6 +43,9 @@
 #==============================================================================
 # Imports
 #------------------------------------------------------------------------------
+require 'json';
+require 'ipaddr';
+require 'socket';
 require 'optparse'
 require 'rbconfig';
 
@@ -410,6 +413,60 @@ def Utils.sleepLoop(theTime, &block)
 	rescue Exception => e
 		puts e
 	end
+
+end
+
+
+
+
+
+#============================================================================
+#		Utils.jsonLoad : Load a json file.
+#----------------------------------------------------------------------------
+def Utils.jsonLoad(theFile)
+
+	return(JSON.parse(IO.read(theFile)));
+
+end
+
+
+
+
+
+#============================================================================
+#		Utils.jsonSave : Save a json file.
+#----------------------------------------------------------------------------
+def Utils.jsonSave(theFile, theState)
+
+	return(IO.write(theFile, JSON.pretty_generate(theState)));
+
+end
+
+
+
+
+
+#============================================================================
+#		Utils.localIP : Get the local IP address.
+#----------------------------------------------------------------------------
+def Utils.localIP(asHex=false)
+
+	# Get the first IPv4 address info
+	theList = Socket.ip_address_list;
+	theInfo = theList.detect{ |info|	info.ipv4?            and
+										!info.ipv4_loopback?  and
+										!info.ipv4_multicast? };
+
+
+
+	# Get the IP address
+	theIP = theInfo.ip_address;
+	
+	if (asHex)
+		theIP = "%08X" % IPAddr.new(theIP).to_i;
+	end
+
+	return(theIP);
 
 end
 

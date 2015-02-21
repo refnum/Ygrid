@@ -43,10 +43,12 @@
 #==============================================================================
 # Imports
 #------------------------------------------------------------------------------
+require "xmlrpc/client";
 require "xmlrpc/server";
 
 require_relative 'cluster';
 require_relative 'syncer';
+require_relative 'utils';
 
 
 
@@ -64,6 +66,49 @@ PATH_PID = Utils.pathData("agent.pid");
 
 # Config
 AGENT_PORT = 7947;
+
+
+
+
+
+#============================================================================
+#		AgentServer : Internal server.
+#----------------------------------------------------------------------------
+class AgentServer
+
+	@@nextID = 1;
+
+
+
+
+
+	#========================================================================
+	#		submitJob : Submit a job.
+	#------------------------------------------------------------------------
+	def submitJob(theGrid, theFile)
+
+		# Allocate the ID
+		theID    = @@nextID;
+		@@nextID = @@nextID + 1;
+
+
+
+		# Generate the job ID
+		theID = ("%08X" % theID) +  Utils.localIP(true);
+
+
+
+		# Save the job
+		theJob = Utils.jsonLoad(theFile);
+
+		theJob["grid"] = theGrid if (!theGrid.empty?);
+		theJob["id"]   = theID;
+
+		return(theID);
+
+	end
+
+end
 
 
 
@@ -97,7 +142,6 @@ def Agent.start(theArgs)
 		Agent.serve();
 	end
 
-
 end
 
 
@@ -121,12 +165,68 @@ end
 
 
 #============================================================================
+#		Agent.submitJob : Submit a job.
+#----------------------------------------------------------------------------
+def Agent.submitJob(theGrid, theFile)
+
+	# Submit the job
+	theID = callLocal("submitJob", theGrid, theFile);
+
+	return(theID);
+
+end
+
+
+
+
+
+#============================================================================
+#		Agent.callLocal : Call the local server.
+#----------------------------------------------------------------------------
+def Agent.callLocal(theCmd, *theArgs)
+
+	# Call the server
+	callServer(nil, theCmd, *theArgs);
+
+end
+
+
+
+
+
+#============================================================================
+#		Agent.callServer : Call a server.
+#----------------------------------------------------------------------------
+def Agent.callServer(theHost, theCmd, *theArgs)
+
+	# Call a server
+	theResult = nil;
+
+	begin
+		theServer = XMLRPC::Client.new(theHost, nil, AGENT_PORT);
+		theResult = theServer.call("ygrid." + theCmd, *theArgs);
+
+	rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
+		puts "Agent unable to connect to #{theHost} for #{theCmd}";
+
+	end
+
+	return(theResult);
+
+end
+
+
+
+
+
+#============================================================================
 #		Agent.serve : Run the server.
 #----------------------------------------------------------------------------
 def Agent.serve()
 
 	# Create the server
 	theServer = XMLRPC::Server.new(AGENT_PORT);
+	theServer.add_handler(XMLRPC::iPIMethods("ygrid"), AgentServer.new)
 
 
 

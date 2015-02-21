@@ -146,7 +146,17 @@ end
 #------------------------------------------------------------------------------
 def cmdSubmit(theArgs)
 
-	raise("cmdSubmit -- not implemented");
+	# Get the state we need
+	theGrid = theArgs["grid"];
+	theFile = File.realpath(theArgs["args"][0]);
+
+
+
+	# Submit the job
+	puts "Submitting #{File.basename(theFile)}...";
+	
+	theID = Controller.submitJob(theGrid, theFile);
+	puts theID;
 
 end
 
@@ -231,10 +241,14 @@ def cmdHelp
 	puts "        jobs distribtued to those grids.";
 	puts "";
 	puts "";
-	puts "";
 	puts "    ygrid status [--grid=name]";
 	puts "";
 	puts "        Displays the status of a grid, or all grids if no grids are selected.";
+	puts "";
+	puts "";
+	puts "    ygrid submit [--grid=name] job.json";
+	puts "";
+	puts "        Submit a job.";
 	puts "";
 	exit(0);
 

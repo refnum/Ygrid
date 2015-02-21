@@ -103,12 +103,34 @@ end
 #----------------------------------------------------------------------------
 def Workspace.cleanup
 
-	# Clean up our files
+	# Clean up daemons
 	#
-	# Logfiles are kept, pidfiles are deleted as daemons are stopped,
-	# but the config files from this session can be removed.
+	# Daemons will clean up their own pidfiles. We keep their logs but delete
+	# their config files from this sesion.
 	FileUtils.rm_f(Dir.glob(Workspace.path("run") + "/*cfg"));
-	FileUtils.rm_f(PATH_LINK);
+
+
+
+	# Clean up jobs
+	#
+	# All jobs are obsolete when the server shuts down. Our index counter must
+	# persist so that any currently distributed jobs will be ignored as stale
+	# if the server is restarted before they are returned.
+	FileUtils.rm_rf(Workspace.path("jobs/queued"));
+	FileUtils.rm_rf(Workspace.path("jobs/active"));
+	FileUtils.rm_rf(Workspace.path("jobs/completed"));
+
+
+
+	# Clean up the workspace
+	#
+	# If we're using a custom workspace then /tmp/ygrid will only contain the
+	# link to it so after removing the link we can remove the directory too.
+	#
+	# If we're using the default workspace then it will still contain logfiles
+	# and the like so we leave it in place.
+	FileUtils.rm_f( PATH_LINK);
+	FileUtils.rmdir(PATH_DEFAULT);
 
 end
 

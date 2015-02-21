@@ -1,10 +1,10 @@
 #!/usr/bin/ruby -w
 #==============================================================================
 #	NAME:
-#		agent.rb
+#		agent_server.rb
 #
 #	DESCRIPTION:
-#		ygrid agent.
+#		ygrid agent server.
 #
 #	COPYRIGHT:
 #		Copyright (c) 2015, refNum Software
@@ -43,11 +43,6 @@
 #==============================================================================
 # Imports
 #------------------------------------------------------------------------------
-require "xmlrpc/client";
-require "xmlrpc/server";
-
-require_relative 'agent_server';
-require_relative 'daemon';
 require_relative 'utils';
 
 
@@ -55,45 +50,38 @@ require_relative 'utils';
 
 
 #==============================================================================
-# Module
+# Class
 #------------------------------------------------------------------------------
-module Agent
+class AgentServer
 
-# Config
-AGENT_PORT = 7947;
-
-
-
-
-
-#============================================================================
-#		Agent.start : Start the agent.
-#----------------------------------------------------------------------------
-def Agent.start(theArgs)
-
-	# Get the state we need
-	abort("Agent already running!") if (Daemon.running?("agent"));
-
-
-
-	# Start the server
-	Daemon.start("agent") do
-		Agent.startServer();
-	end
-
-end
+# Globals
+@@nextID = 1;
 
 
 
 
 
-#============================================================================
-#		Agent.submitJob : Submit a job.
-#----------------------------------------------------------------------------
-def Agent.submitJob(theGrid, theFile)
+#==============================================================================
+#		AgentServer::submitJob : Submit a job.
+#------------------------------------------------------------------------------
+def submitJob(theGrid, theFile)
 
-	# Submit the job
-	theID = callLocal("submitJob", theGrid, theFile);
+	# Allocate the ID
+	theID    = @@nextID;
+	@@nextID = @@nextID + 1;
+
+
+
+	# Generate the job ID
+	theID = ("%08X" % theID) +  Utils.localIP(true);
+
+
+
+	# Save the job
+	theJob = Utils.jsonLoad(theFile);
+
+	theJob["grid"] = theGrid if (!theGrid.empty?);
+	theJob["id"]   = theID;
 
 	return(theID);
 
@@ -103,64 +91,9 @@ end
 
 
 
-#============================================================================
-#		Agent.callLocal : Call the local server.
-#----------------------------------------------------------------------------
-def Agent.callLocal(theCmd, *theArgs)
-
-	# Call the server
-	callServer(nil, theCmd, *theArgs);
-
-end
-
-
-
-
-
-#============================================================================
-#		Agent.callServer : Call a server.
-#----------------------------------------------------------------------------
-def Agent.callServer(theHost, theCmd, *theArgs)
-
-	# Call a server
-	theResult = nil;
-
-	begin
-		theServer = XMLRPC::Client.new(theHost, nil, AGENT_PORT);
-		theResult = theServer.call("ygrid." + theCmd, *theArgs);
-
-	rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
-		puts "Agent unable to connect to #{theHost} for #{theCmd}";
-	end
-
-	return(theResult);
-
-end
-
-
-
-
-
-#============================================================================
-#		Agent.startServer : Start the server.
-#----------------------------------------------------------------------------
-def Agent.startServer()
-
-	# Create the server
-	theServer = XMLRPC::Server.new(AGENT_PORT);
-	theServer.add_handler(XMLRPC::iPIMethods("ygrid"), AgentServer.new)
-
-
-	# Run until done
-	theServer.serve();
-
-end
-
-
-
-
-
 #==============================================================================
-# Module
+# Class
 #------------------------------------------------------------------------------
 end
+
+

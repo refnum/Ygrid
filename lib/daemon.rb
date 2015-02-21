@@ -99,8 +99,7 @@ def Daemon.waitFor(theTimeout, theCmds)
 
 
 	# Wait for them to exist
-	while (Time.now <= endTime)
-
+	loop do
 		activeCmds.clear();
 
 		theCmds.each do |theCmd|
@@ -108,8 +107,8 @@ def Daemon.waitFor(theTimeout, theCmds)
 		end
 
 		break      if (activeCmds.size == theCmds.size);
+		break      if (Time.now >= endTime)
 		sleep(0.2) if (theTimeout != 0);
-
 	end
 
 	return(activeCmds);

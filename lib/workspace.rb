@@ -136,11 +136,11 @@ end
 
 
 #============================================================================
-#		Workspace.pathConfig : Get a path to a config file.
+#		Workspace.pathJobsQueued : Get a path to queued jobs folder.
 #----------------------------------------------------------------------------
-def Workspace.pathConfig(theName)
+def Workspace.pathJobsQueued
 
-	return(Workspace.path("run/#{theName}.cfg"));
+	return(Workspace.path("jobs/queued"));
 
 end
 
@@ -149,11 +149,11 @@ end
 
 
 #============================================================================
-#		Workspace.pathLog : Get a path to a logfile.
+#		Workspace.pathConfig : Get a path to a daemon config file.
 #----------------------------------------------------------------------------
-def Workspace.pathLog(theName)
+def Workspace.pathConfig(theCmd)
 
-	return(Workspace.path("run/#{theName}.log"));
+	return(Workspace.path("run/#{theCmd}.cfg"));
 
 end
 
@@ -162,11 +162,24 @@ end
 
 
 #============================================================================
-#		Workspace.pathPID : Get a path to a pidfile.
+#		Workspace.pathLog : Get a path to a daemon logfile.
 #----------------------------------------------------------------------------
-def Workspace.pathPID(theName)
+def Workspace.pathLog(theCmd)
 
-	return(Workspace.path("run/#{theName}.pid"));
+	return(Workspace.path("run/#{theCmd}.log"));
+
+end
+
+
+
+
+
+#============================================================================
+#		Workspace.pathPID : Get a path to a daemon pidfile.
+#----------------------------------------------------------------------------
+def Workspace.pathPID(theCmd)
+
+	return(Workspace.path("run/#{theCmd}.pid"));
 
 end
 

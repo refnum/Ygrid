@@ -44,6 +44,7 @@
 # Imports
 #------------------------------------------------------------------------------
 require_relative 'utils';
+require_relative 'workspace';
 
 
 
@@ -64,7 +65,7 @@ class AgentServer
 #==============================================================================
 #		AgentServer::submitJob : Submit a job.
 #------------------------------------------------------------------------------
-def submitJob(theGrid, theFile)
+def submitJob(theGrid, theJob)
 
 	# Allocate the ID
 	theID    = @@nextID;
@@ -78,10 +79,11 @@ def submitJob(theGrid, theFile)
 
 
 	# Save the job
-	theJob = Utils.jsonLoad(theFile);
-
 	theJob["grid"] = theGrid if (!theGrid.empty?);
 	theJob["id"]   = theID;
+
+	thePath = Workspace.pathJobsQueued() + "/#{theID}.job";
+	Utils.jsonSave(thePath, theJob);
 
 	return(theID);
 

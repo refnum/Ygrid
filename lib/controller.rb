@@ -48,6 +48,7 @@ require "xmlrpc/server";
 require_relative 'agent';
 require_relative 'cluster';
 require_relative 'daemon';
+require_relative 'job';
 require_relative 'syncer';
 require_relative 'workspace';
 
@@ -169,8 +170,21 @@ end
 #----------------------------------------------------------------------------
 def Controller.submitJob(theGrid, theFile)
 
+	# Prepare the job
+	theJob    = Utils.jsonLoad(theFile);
+	theErrors = Job.validate(theJob);
+
+	if (!theErrors.empty?)
+		puts "Unable to validate #{theFile}:";
+		theErrors.each do |theError|
+			puts "  #{theError}";
+		end
+	end
+
+
+
 	# Submit the job
-	Agent.submitJob(theGrid, theFile);
+	Agent.submitJob(theGrid, theJob);
 
 end
 

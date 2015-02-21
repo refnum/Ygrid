@@ -90,10 +90,10 @@ end
 #============================================================================
 #		Agent.submitJob : Submit a job.
 #----------------------------------------------------------------------------
-def Agent.submitJob(theGrid, theFile)
+def Agent.submitJob(theGrid, theJob)
 
 	# Submit the job
-	theID = callLocal("submitJob", theGrid, theFile);
+	theID = callLocal("submitJob", theGrid, theJob);
 
 	return(theID);
 

@@ -1,10 +1,10 @@
 #!/usr/bin/ruby -w
 #==============================================================================
 #	NAME:
-#		cluster.rb
+#		host.rb
 #
 #	DESCRIPTION:
-#		Serf-based cluster.
+#		ygrid host.
 #
 #	COPYRIGHT:
 #		Copyright (c) 2015, refNum Software
@@ -43,115 +43,89 @@
 #==============================================================================
 # Imports
 #------------------------------------------------------------------------------
-require 'json';
-
-require_relative 'daemon';
-require_relative 'host';
-require_relative 'utils';
-require_relative 'workspace';
+require 'ipaddr';
+require 'rbconfig';
+require 'socket';
 
 
 
 
 
 #==============================================================================
-# Module
+# Class
 #------------------------------------------------------------------------------
-module Cluster
+class Host
 
-# Config
-CONFIG_FILE = <<CONFIG_FILE
-{
-    "discover" : "ygrid",
-
-    "tags" : {
-        "os"    : "TOKEN_HOST_OS",
-        "cpu"   : "TOKEN_HOST_CPUS",
-        "ghz"   : "TOKEN_HOST_SPEED",
-        "mem"   : "TOKEN_HOST_MEM",
-        "load"  : "TOKEN_HOST_LOAD",
-        "grids" : "TOKEN_GRIDS"
-    }
-}
-CONFIG_FILE
+	attr_reader :os;
+	attr_reader :cpus;
+	attr_reader :speed;
+	attr_reader :memory;
+	attr_reader :load;
+	attr_reader :address;
 
 
 
 
 
-#============================================================================
-#		Cluster.start : Start the cluster.
-#----------------------------------------------------------------------------
-def Cluster.start(theArgs)
+#==============================================================================
+#		Host::initialize : Initialiser.
+#------------------------------------------------------------------------------
+def initialize(theInfo={})
 
-	# Get the state we need
-	theHost   = Host.new();
-	theConfig = CONFIG_FILE.dup;
-	theGrids  = theArgs["grids"].split(",").sort.uniq.join(",");
-
-	pathConfig = Workspace.pathConfig("cluster");
-	pathLog    = Workspace.pathLog(   "cluster");
-
-	theConfig.gsub!("TOKEN_HOST_OS",    theHost.os);
-	theConfig.gsub!("TOKEN_HOST_CPUS",  theHost.cpus);
-	theConfig.gsub!("TOKEN_HOST_SPEED", theHost.speed);
-	theConfig.gsub!("TOKEN_HOST_MEM",   theHost.memory);
-	theConfig.gsub!("TOKEN_HOST_LOAD",  theHost.load);
-	theConfig.gsub!("TOKEN_GRIDS",      theGrids);
-
-	abort("Cluster already running!") if (Daemon.running?("cluster"));
-
-
-
-	# Start the server
-	IO.write(pathConfig, theConfig);
-
-	thePID = Process.spawn("serf agent -config-file=\"#{pathConfig}\"", [:out, :err]=>[pathLog, "w"])
-	Process.detach(thePID);
-
-	Daemon.started("cluster", thePID);
-
-end
-
-
-
-
-
-#============================================================================
-#		Cluster.joinGrids : Join some grids.
-#----------------------------------------------------------------------------
-def Cluster.joinGrids(theGrids)
-
-	# Calculate the new grids
-	newGrids = getGrids().concat(theGrids);
-
-
-
-	# Update our state	
-	setGrids(newGrids);
-
-end
-
-
-
-
-
-#============================================================================
-#		Cluster.leaveGrids : Leave some grids.
-#----------------------------------------------------------------------------
-def Cluster.leaveGrids(theGrids)
-
-	# Calculate the new grids
-	newGrids = getGrids();
+	# Initialise ourselves
+	@os      = theInfo.fetch("os",      local_os);
+	@cpus    = theInfo.fetch("cpus",    local_cpus);
+	@speed   = theInfo.fetch("speed",   local_speed);
+	@memory  = theInfo.fetch("memory",  local_memory);
+	@load    = theInfo.fetch("load",    local_load);
+	@address = theInfo.fetch("address", local_address);
 	
-	theGrids.each do |theGrid|
-		newGrids.delete(theGrid);
+end
+
+
+
+
+
+#==============================================================================
+#		Host::to_h : Get the host as a hash.
+#------------------------------------------------------------------------------
+def to_h
+
+	# Get the info
+	theInfo = Hash.new();
+
+	theInfo["os"]      = @os;
+	theInfo["cpus"]    = @cpus;
+	theInfo["speed"]   = @speed;
+	theInfo["memory"]  = @memory;
+	theInfo["load"]    = @load;
+	theInfo["address"] = @address;
+
+	return(theInfo);
+	
+end
+
+
+
+
+
+#============================================================================
+#		Host::local_os : Get the local OS.
+#----------------------------------------------------------------------------
+def local_os
+
+	case RbConfig::CONFIG['host_os']
+		when /darwin|mac os/
+			return("mac");
+		
+		when /linux/
+			return("linux");
+
+		when /mswin|msys|mingw|cygwin|bccwin|wince|emc/
+			return("windows");
 	end
 
-
-
-	# Update our state	
-	setGrids(newGrids);
+	abort("UNKNOWN OS");
 
 end
 
@@ -160,21 +134,16 @@ end
 
 
 #============================================================================
-#		Cluster.gridStatus : Get the status of a grid.
+#		Host::local_cpus : Get the local CPU count.
 #----------------------------------------------------------------------------
-def Cluster.gridStatus(theGrid)
+def local_cpus
 
-	# Get the state we need
-	if (!theGrid.empty?)
-		theGrid = "-tag grid=\btheGrid\b";
+	case local_os()
+		when "mac", "linux"
+			return(`sysctl -n hw.ncpu`.to_i);
 	end
 
-
-
-	# Get the status
-	theStatus = JSON.parse(`serf members #{theGrid} -format=json`);
-
-	return(theStatus);
+	abort("UNKNOWN OS");
 
 end
 
@@ -183,14 +152,16 @@ end
 
 
 #============================================================================
-#		Cluster.getGrids : Get the grids we particpate in.
+#		Host::local_speed : Get the local CPU speed in Ghz.
 #----------------------------------------------------------------------------
-def Cluster.getGrids()
+def local_speed
 
-	theInfo  = JSON.parse(`serf info -format=json`);
-	theGrids = theInfo["tags"]["grids"].split(",");
+	case local_os()
+		when "mac", "linux"
+			return(`sysctl -n hw.cpufrequency`.chomp.to_f / 1000000000.0);
+	end
 
-	return(theGrids);
+	abort("UNKNOWN PLATFORM");
 
 end
 
@@ -199,16 +170,56 @@ end
 
 
 #============================================================================
-#		Cluster.setGrids : Set the grids we particpate in.
+#		Host::local_memory : Get the local memory in Gb.
 #----------------------------------------------------------------------------
-def Cluster.setGrids(theGrids)
+def local_memory
 
-	theGrids = theGrids.sort.uniq.join(",");
-	theLog   = `serf tags -set grids=#{theGrids}`.chomp;
-
-	if (theLog != "Successfully updated agent tags")
-		puts "ERROR - Unable to set tags: #{theLog}";
+	case local_os()
+		when "mac", "linux"
+			return(`sysctl -n hw.memsize`.chomp.to_i / 1073741824);
 	end
+
+	abort("UNKNOWN PLATFORM");
+
+end
+
+
+
+
+
+#============================================================================
+#		Host::local_load : Get the local load.
+#----------------------------------------------------------------------------
+def local_load
+
+	case local_os()
+		when "mac", "linux"
+			loadTotal = `sysctl -n vm.loadavg | cut -f 2 -d ' '`.chomp.to_f;
+			numCPUs   = local_cpus().to_f;
+
+			return((loadTotal / numCPUs).round(2));
+	end
+
+	abort("UNKNOWN PLATFORM");
+
+end
+
+
+
+
+
+#============================================================================
+#		Host::local_address : Get the local IP address.
+#----------------------------------------------------------------------------
+def local_address
+
+	# Get the first IPv4 address
+	theList = Socket.ip_address_list;
+	theInfo = theList.detect{ |info|	info.ipv4?            and
+										!info.ipv4_loopback?  and
+										!info.ipv4_multicast? };
+
+	return(IPAddr.new(theInfo.ip_address));
 
 end
 
@@ -217,6 +228,8 @@ end
 
 
 #==============================================================================
-# Module
+# Class
 #------------------------------------------------------------------------------
 end
+
+

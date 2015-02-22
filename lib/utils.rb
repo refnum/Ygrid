@@ -46,10 +46,7 @@
 require 'fileutils';
 
 require 'json';
-require 'ipaddr';
-require 'socket';
 require 'optparse'
-require 'rbconfig';
 
 
 
@@ -59,105 +56,6 @@ require 'rbconfig';
 # Module
 #------------------------------------------------------------------------------
 module Utils
-
-
-
-
-
-#============================================================================
-#		Utils.hostOS : Get the host OS.
-#----------------------------------------------------------------------------
-def Utils.hostOS
-
-	case RbConfig::CONFIG['host_os']
-		when /darwin|mac os/
-			return("mac");
-		
-		when /linux/
-			return("linux");
-
-		when /mswin|msys|mingw|cygwin|bccwin|wince|emc/
-			return("windows");
-	end
-
-	return("UNKNOWN");
-
-end
-
-
-
-
-
-#============================================================================
-#		Utils.cpuCount : Get the number of CPUs.
-#----------------------------------------------------------------------------
-def Utils.cpuCount
-
-	case Utils.hostOS()
-		when "mac", "linux"
-			return(`sysctl -n hw.ncpu`.chomp);
-	end
-
-	abort("UNKNOWN PLATFORM");
-
-end
-
-
-
-
-
-#============================================================================
-#		Utils.cpuGHz : Get the CPU speed.
-#----------------------------------------------------------------------------
-def Utils.cpuGHz
-
-	case Utils.hostOS()
-		when "mac", "linux"
-			return((`sysctl -n hw.cpufrequency`.chomp.to_f / 1000000000.0).to_s);
-	end
-
-	abort("UNKNOWN PLATFORM");
-
-end
-
-
-
-
-
-#============================================================================
-#		Utils.memGB : Get the physical memory.
-#----------------------------------------------------------------------------
-def Utils.memGB
-
-	case Utils.hostOS()
-		when "mac", "linux"
-			return((`sysctl -n hw.memsize`.chomp.to_i / 1073741824).to_s);
-	end
-
-	abort("UNKNOWN PLATFORM");
-
-end
-
-
-
-
-
-#============================================================================
-#		Utils.sysLoad : Get the system load.
-#----------------------------------------------------------------------------
-def Utils.sysLoad
-
-	case Utils.hostOS()
-		when "mac", "linux"
-			loadTotal = `sysctl -n vm.loadavg | cut -f 2 -d ' '`.chomp.to_f;
-			numCPUs   = cpuCount().to_f;
-
-			return("%.2f" % (loadTotal / numCPUs));
-	end
-
-	abort("UNKNOWN PLATFORM");
-
-end
 
 
 
@@ -215,11 +113,12 @@ def Utils.checkInstall
 	# Get the state we need
 	haveRsync = cmdInstalled?("rsync");
 	haveSerf  = cmdInstalled?("serf");
+	theHost   = Host.new();
 
 
 
 	# Show some help
-	case Utils.hostOS()
+	case theHost.os()
 		when "mac"
 			if (!haveSerf)
 				puts "Unable to locate serf. Install with Homebrew:";
@@ -362,30 +261,6 @@ def Utils.jsonSave(theFile, theState)
 
 	IO.write(    tmpFile, JSON.pretty_generate(theState));
 	FileUtils.mv(tmpFile, theFile);
-
-end
-
-
-
-
-
-#============================================================================
-#		Utils.localIP : Get the local IP address.
-#----------------------------------------------------------------------------
-def Utils.localIP()
-
-	# Get the first IPv4 address info
-	theList = Socket.ip_address_list;
-	theInfo = theList.detect{ |info|	info.ipv4?            and
-										!info.ipv4_loopback?  and
-										!info.ipv4_multicast? };
-
-
-
-	# Get the IP address
-	theIP = IPAddr.new(theInfo.ip_address);
-
-	return(theIP);
 
 end
 

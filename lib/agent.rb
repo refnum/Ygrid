@@ -115,9 +115,9 @@ def Agent.startScheduler()
 	Thread.new do
 		loop do
 			pathJob = getNextJob();
-			theHost = getBestHost();
+			theNode = getBestNode();
 
-			scheduleJob(pathJob, theHost);
+			scheduleJob(pathJob, theNode);
 		end
 	end
 
@@ -166,11 +166,11 @@ end
 
 
 #============================================================================
-#		Agent.getBestHost : Get the best host.
+#		Agent.getBestNode : Get the best node.
 #----------------------------------------------------------------------------
-def Agent.getBestHost
+def Agent.getBestNode
 	# todo
-	abort("Agent.getBestHost - todo");
+	abort("Agent.getBestNode - todo");
 end
 
 
@@ -180,7 +180,7 @@ end
 #============================================================================
 #		Agent.scheduleJob : Schedule a job.
 #----------------------------------------------------------------------------
-def Agent.scheduleJob(pathJob, theHost)
+def Agent.scheduleJob(pathJob, theNode)
 	# todo
 	abort("Agent.scheduleJob - todo");
 end

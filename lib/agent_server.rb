@@ -44,7 +44,7 @@
 # Imports
 #------------------------------------------------------------------------------
 require_relative 'job';
-require_relative 'host';
+require_relative 'node';
 require_relative 'utils';
 require_relative 'workspace';
 
@@ -67,8 +67,7 @@ class AgentServer
 def submitJob(theGrid, theJob)
 
 	# Prepare the job
-	theHost = Host.new();
-	theID   = Job.encodeID(theHost.address, nextIndex);
+	theID = Job.encodeID(Node.local_address, nextIndex);
 
 	theJob["grid"] = theGrid if (!theGrid.empty?);
 	theJob["id"]   = theID;

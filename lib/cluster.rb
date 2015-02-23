@@ -46,7 +46,7 @@
 require 'json';
 
 require_relative 'daemon';
-require_relative 'host';
+require_relative 'node';
 require_relative 'utils';
 require_relative 'workspace';
 
@@ -65,11 +65,11 @@ CONFIG_FILE = <<CONFIG_FILE
     "discover" : "ygrid",
 
     "tags" : {
-        "os"    : "TOKEN_HOST_OS",
-        "cpu"   : "TOKEN_HOST_CPUS",
-        "ghz"   : "TOKEN_HOST_SPEED",
-        "mem"   : "TOKEN_HOST_MEM",
-        "load"  : "TOKEN_HOST_LOAD",
+        "os"    : "TOKEN_NODE_OS",
+        "cpu"   : "TOKEN_NODE_CPUS",
+        "ghz"   : "TOKEN_NODE_SPEED",
+        "mem"   : "TOKEN_NODE_MEM",
+        "load"  : "TOKEN_NODE_LOAD",
         "grids" : "TOKEN_GRIDS"
     }
 }
@@ -85,18 +85,17 @@ CONFIG_FILE
 def Cluster.start(theArgs)
 
 	# Get the state we need
-	theHost   = Host.new();
 	theConfig = CONFIG_FILE.dup;
 	theGrids  = theArgs["grids"].split(",").sort.uniq.join(",");
 
 	pathConfig = Workspace.pathConfig("cluster");
 	pathLog    = Workspace.pathLog(   "cluster");
 
-	theConfig.gsub!("TOKEN_HOST_OS",    theHost.os);
-	theConfig.gsub!("TOKEN_HOST_CPUS",  theHost.cpus.to_s);
-	theConfig.gsub!("TOKEN_HOST_SPEED", theHost.speed.to_s);
-	theConfig.gsub!("TOKEN_HOST_MEM",   theHost.memory.to_s);
-	theConfig.gsub!("TOKEN_HOST_LOAD",  theHost.load.to_s);
+	theConfig.gsub!("TOKEN_NODE_OS",    Node.local_os);
+	theConfig.gsub!("TOKEN_NODE_CPUS",  Node.local_cpus.to_s);
+	theConfig.gsub!("TOKEN_NODE_SPEED", Node.local_speed.to_s);
+	theConfig.gsub!("TOKEN_NODE_MEM",   Node.local_memory.to_s);
+	theConfig.gsub!("TOKEN_NODE_LOAD",  Node.local_load.to_s);
 	theConfig.gsub!("TOKEN_GRIDS",      theGrids);
 
 	abort("Cluster already running!") if (Daemon.running?("cluster"));

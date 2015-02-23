@@ -1,10 +1,10 @@
 #!/usr/bin/ruby -w
 #==============================================================================
 #	NAME:
-#		host.rb
+#		node.rb
 #
 #	DESCRIPTION:
-#		ygrid host.
+#		ygrid node.
 #
 #	COPYRIGHT:
 #		Copyright (c) 2015, refNum Software
@@ -54,7 +54,7 @@ require 'socket';
 #==============================================================================
 # Class
 #------------------------------------------------------------------------------
-class Host
+class Node
 
 	attr_reader :name;
 	attr_reader :address;
@@ -65,7 +65,7 @@ class Host
 
 
 #==============================================================================
-#		Host::initialize : Initialiser.
+#		Node::initialize : Initialiser.
 #------------------------------------------------------------------------------
 def initialize(theName=nil, theAddress=nil, theTags=nil)
 
@@ -90,7 +90,7 @@ end
 
 
 #==============================================================================
-#		Host::os : Get the OS.
+#		Node::os : Get the OS.
 #------------------------------------------------------------------------------
 def os
 
@@ -103,7 +103,7 @@ end
 
 
 #==============================================================================
-#		Host::cpus : Get the CPU count.
+#		Node::cpus : Get the CPU count.
 #------------------------------------------------------------------------------
 def cpus
 
@@ -116,7 +116,7 @@ end
 
 
 #==============================================================================
-#		Host::speed : Get the CPU speed in Ghz.
+#		Node::speed : Get the CPU speed in Ghz.
 #------------------------------------------------------------------------------
 def speed
 
@@ -129,7 +129,7 @@ end
 
 
 #==============================================================================
-#		Host::memory : Get the memory in Gb.
+#		Node::memory : Get the memory in Gb.
 #------------------------------------------------------------------------------
 def memory
 
@@ -142,7 +142,7 @@ end
 
 
 #==============================================================================
-#		Host::load : Get the system load.
+#		Node::load : Get the system load.
 #------------------------------------------------------------------------------
 def load
 
@@ -155,7 +155,7 @@ end
 
 
 #============================================================================
-#		Host.local_os : Get the local OS.
+#		Node.local_os : Get the local OS.
 #----------------------------------------------------------------------------
 def self.local_os
 
@@ -170,7 +170,7 @@ def self.local_os
 			return("windows");
 	end
 
-	abort("UNKNOWN OS");
+	raise("UNKNOWN OS");
 
 end
 
@@ -179,7 +179,7 @@ end
 
 
 #============================================================================
-#		Host.local_cpus : Get the local CPU count.
+#		Node.local_cpus : Get the local CPU count.
 #----------------------------------------------------------------------------
 def self.local_cpus
 
@@ -188,7 +188,7 @@ def self.local_cpus
 			return(`sysctl -n hw.ncpu`.to_i);
 	end
 
-	abort("UNKNOWN OS");
+	raise("UNKNOWN OS");
 
 end
 
@@ -197,7 +197,7 @@ end
 
 
 #============================================================================
-#		Host.local_speed : Get the local CPU speed in Ghz.
+#		Node.local_speed : Get the local CPU speed in Ghz.
 #----------------------------------------------------------------------------
 def self.local_speed
 
@@ -206,7 +206,7 @@ def self.local_speed
 			return(`sysctl -n hw.cpufrequency`.chomp.to_f / 1000000000.0);
 	end
 
-	abort("UNKNOWN PLATFORM");
+	raise("UNKNOWN PLATFORM");
 
 end
 
@@ -215,7 +215,7 @@ end
 
 
 #============================================================================
-#		Host.local_memory : Get the local memory in Gb.
+#		Node.local_memory : Get the local memory in Gb.
 #----------------------------------------------------------------------------
 def self.local_memory
 
@@ -224,7 +224,7 @@ def self.local_memory
 			return(`sysctl -n hw.memsize`.chomp.to_i / 1073741824);
 	end
 
-	abort("UNKNOWN PLATFORM");
+	raise("UNKNOWN PLATFORM");
 
 end
 
@@ -233,7 +233,7 @@ end
 
 
 #============================================================================
-#		Host.local_load : Get the local load.
+#		Node.local_load : Get the local load.
 #----------------------------------------------------------------------------
 def self.local_load
 
@@ -245,7 +245,7 @@ def self.local_load
 			return((loadTotal / numCPUs).round(2));
 	end
 
-	abort("UNKNOWN PLATFORM");
+	raise("UNKNOWN PLATFORM");
 
 end
 
@@ -254,11 +254,10 @@ end
 
 
 #============================================================================
-#		Host.local_name : Get the local hostname.
+#		Node.local_name : Get the local name.
 #----------------------------------------------------------------------------
 def self.local_name
 
-	# Get the hostname
 	return(Socket.hostname);
 
 end
@@ -268,7 +267,7 @@ end
 
 
 #============================================================================
-#		Host.local_address : Get the local IP address.
+#		Node.local_address : Get the local IP address.
 #----------------------------------------------------------------------------
 def self.local_address
 

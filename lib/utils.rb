@@ -48,6 +48,8 @@ require 'fileutils';
 require 'json';
 require 'optparse'
 
+require_relative 'node';
+
 
 
 
@@ -117,7 +119,7 @@ def Utils.checkInstall
 
 
 	# Show some help
-	case Host.local_os()
+	case Node.local_os()
 		when "mac"
 			if (!haveSerf)
 				puts "Unable to locate serf. Install with Homebrew:";

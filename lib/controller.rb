@@ -49,6 +49,7 @@ require_relative 'agent';
 require_relative 'cluster';
 require_relative 'daemon';
 require_relative 'job';
+require_relative 'status';
 require_relative 'syncer';
 require_relative 'workspace';
 
@@ -178,6 +179,27 @@ def Controller.submitJob(theGrid, theFile)
 
 	# Submit the job
 	Agent.submitJob(theGrid, theJob);
+
+end
+
+
+
+
+
+#============================================================================
+#		Controller.showStatus : Show the status.
+#----------------------------------------------------------------------------
+def Controller.showStatus(theGrids)
+
+	# Show the grids
+	Utils.sleepLoop(2) do
+
+		theGrids.each do |theGrid|
+			theNodes = Cluster.nodes(theGrid);
+			Status.showStatus(theGrid, theNodes);
+		end
+
+	end
 
 end
 

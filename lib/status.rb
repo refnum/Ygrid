@@ -45,6 +45,7 @@
 #------------------------------------------------------------------------------
 require 'json';
 
+require_relative 'node';
 require_relative 'utils';
 
 
@@ -56,13 +57,13 @@ require_relative 'utils';
 #------------------------------------------------------------------------------
 module Status
 
-WORKER_COLUMNS = {
-	"name" => { "title" => "Worker",     "width" => 25 },
-	"host" => { "title" => "IP Address", "width" => 18 },
-	"cpus" => { "title" => "CPUs",       "width" => 15 },
-	"mem"  => { "title" => "Memory",     "width" => 14 },
-	"load" => { "title" => "Load",       "width" => 10 },
-	"jobs" => { "title" => "Jobs",       "width" => 4  }
+NODE_COLUMNS = {
+	"name" => { "title" => "Node",    "width" => 25 },
+	"addr" => { "title" => "Address", "width" => 18 },
+	"cpus" => { "title" => "CPUs",    "width" => 15 },
+	"mem"  => { "title" => "Memory",  "width" => 14 },
+	"load" => { "title" => "Load",    "width" => 10 },
+	"jobs" => { "title" => "Jobs",    "width" => 4  }
 };
 
 JOB_COLUMNS = {
@@ -99,30 +100,31 @@ end
 
 
 #============================================================================
-#		Status.workerRow : Get a worker table row.
+#		Status.nodeRow : Get a node table row.
 #----------------------------------------------------------------------------
-def Status.workerRow(theWorker)
+def Status.nodeRow(theNode)
 
 	# Build the columns
-	theTags    = theWorker["tags"];
+	theTags    = theNode.tags;
 	theColumns = Hash.new();
 
-	theColumns["name"] = theWorker["name"].sub(/.local$/, "");
-	theColumns["host"] = theWorker["addr"].split(":").first;
-	theColumns["load"] = theTags["load"];
+	theColumns["name"] = theNode.pretty_name;
+	theColumns["addr"] = theNode.address;
+	theColumns["cpus"] = theNode.cpus   + " x " + theNode.speed + "Ghz";
+	theColumns["mem"]  = theNode.memory + "GB";
+	theColumns["load"] = theNode.load;
 	theColumns["jobs"] = "-";
-	theColumns["cpus"] = theTags["cpu"] + " x " + theTags["ghz"] + "Ghz";
-	theColumns["mem"]  = theTags["mem"] + "GB";
 
 
 
 	# Get the row
 	theRow = "";
 
-	WORKER_COLUMNS.each_pair do |theKey, theInfo|
-		theText  = theColumns[theKey];
+	NODE_COLUMNS.each_pair do |theKey, theInfo|
+		theText  = theColumns[theKey].to_s;
 		theWidth = theInfo["width"];
-		theRow   << theText.slice(0, theWidth-1).ljust(theWidth);
+		
+		theRow << theText.slice(0, theWidth-1).ljust(theWidth);
 	end
 
 	return(theRow);
@@ -134,13 +136,11 @@ end
 
 
 #============================================================================
-#		Status.putStdout : Send the status to stdout.
+#		Status.showStatus : Show the status.
 #----------------------------------------------------------------------------
-def Status.putStdout(theGrid, theStatus)
+def Status.showStatus(theGrid, theNodes)
 
 	# Get the state we need
-	theMembers = theStatus["members"];
-	
 	if (theGrid.empty?)
 		theGrid = "ygrid";
 	end
@@ -152,12 +152,12 @@ def Status.putStdout(theGrid, theStatus)
 
 
 
-	# Show the workers
-	theHeader = headerColumns(WORKER_COLUMNS);
+	# Show the nodes
+	theHeader = headerColumns(NODE_COLUMNS);
 	Utils.putHeader(theHeader, "-");
 
-	theMembers.each do |theWorker|
-		puts workerRow(theWorker);
+	theNodes.each do |theNode|
+		puts nodeRow(theNode);
 	end
 
 	puts "";

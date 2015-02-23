@@ -46,7 +46,6 @@
 require 'optparse';
 
 require_relative 'lib/controller';
-require_relative 'lib/status';
 require_relative 'lib/utils';
 
 
@@ -179,14 +178,7 @@ def cmdStatus(theArgs)
 
 
 	# Show the status
-	Utils.sleepLoop(2) do
-
-		theGrids.each do |theGrid|
-			gridStatus = Cluster.gridStatus(theGrid);
-			Status.putStdout(theGrid, gridStatus);
-		end
-
-	end
+	Controller.showStatus(theGrids);
 
 end
 

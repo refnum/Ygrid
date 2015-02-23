@@ -145,9 +145,9 @@ end
 
 
 #============================================================================
-#		Cluster.gridStatus : Get the status of a grid.
+#		Cluster.nodes : Get the nodes in a grid.
 #----------------------------------------------------------------------------
-def Cluster.gridStatus(theGrid)
+def Cluster.nodes(theGrid)
 
 	# Get the state we need
 	if (!theGrid.empty?)
@@ -156,10 +156,15 @@ def Cluster.gridStatus(theGrid)
 
 
 
-	# Get the status
-	theStatus = JSON.parse(`serf members #{theGrid} -format=json`);
+	# Get the nodes
+	theMembers = JSON.parse(`serf members -status alive #{theGrid} -format=json`).fetch("members", {});
+	theNodes   = [];
 
-	return(theStatus);
+	theMembers.each do |theMember|
+		theNodes << Node.new(theMember["name"], theMember["addr"], theMember["tags"]);
+	end
+
+	return(theNodes);
 
 end
 

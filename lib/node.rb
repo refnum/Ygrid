@@ -69,19 +69,51 @@ class Node
 #------------------------------------------------------------------------------
 def initialize(theName=nil, theAddress=nil, theTags=nil)
 
-	# Initialise ourselves
-	@name    = theName;
-	@address = theAddress;
-	@tags    = theTags;
+	# Local node
+	if (theName == nil)
+		@name    = local_name;
+		@address = local_address;
+		@tags    = Hash.new();
 
-	if (@tags == nil)
-		@tags         = Hash.new();
 		@tags["os"]   = local_os;
-		@tags["cpus"] = local_cpus;
+		@tags["cpu"]  = local_cpus;
 		@tags["ghz"]  = local_speed;
 		@tags["mem"]  = local_memory;
 		@tags["load"] = local_load;
+
+
+	# Specified node
+	else
+		@name    = theName;
+		@address = IPAddr.new(theAddress.split(":")[0]);
+		@tags    = theTags;
 	end
+
+end
+
+
+
+
+
+#==============================================================================
+#		Node::to_s : Convert to a string.
+#------------------------------------------------------------------------------
+def to_s
+
+	return("{ name: \"#{@name}\", address: \"#{@address}\", tags: #{@tags} }");
+
+end
+
+
+
+
+
+#==============================================================================
+#		Node::pretty_name : Get the prettified name.
+#------------------------------------------------------------------------------
+def pretty_name
+
+	return(@name.sub(".local", ""));
 
 end
 
@@ -107,7 +139,7 @@ end
 #------------------------------------------------------------------------------
 def cpus
 
-	return(@tags["cpus"]);
+	return(@tags["cpu"]);
 
 end
 

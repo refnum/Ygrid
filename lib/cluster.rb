@@ -122,13 +122,8 @@ end
 #----------------------------------------------------------------------------
 def Cluster.joinGrids(theGrids)
 
-	# Calculate the new grids
-	newGrids = getGrids().concat(theGrids);
-
-
-
-	# Update our state	
-	setGrids(newGrids);
+	# Join the grids
+	addToTag("grids", theGrids.join(","));
 
 end
 
@@ -141,17 +136,8 @@ end
 #----------------------------------------------------------------------------
 def Cluster.leaveGrids(theGrids)
 
-	# Calculate the new grids
-	newGrids = getGrids();
-	
-	theGrids.each do |theGrid|
-		newGrids.delete(theGrid);
-	end
-
-
-
-	# Update our state	
-	setGrids(newGrids);
+	# Leave the grids
+	removeFromTag("grids", theGrids.join(","));
 
 end
 
@@ -183,14 +169,14 @@ end
 
 
 #============================================================================
-#		Cluster.getGrids : Get the grids we particpate in.
+#		Cluster.addToTag : Add a value to a tag list
 #----------------------------------------------------------------------------
-def Cluster.getGrids()
+def Cluster.addToTag(theTag, theValue)
 
-	theInfo  = JSON.parse(`serf info -format=json`);
-	theGrids = theInfo["tags"]["grids"].split(",");
-
-	return(theGrids);
+	theValues = getTag(theTag).split(",") << theValue;
+	theValue  = theValues.sort.uniq.join(",");
+	
+	setTag(theTag, theValue);
 
 end
 
@@ -199,15 +185,50 @@ end
 
 
 #============================================================================
-#		Cluster.setGrids : Set the grids we particpate in.
+#		Cluster.removeFromTag : Remove a value from a tag list.
 #----------------------------------------------------------------------------
-def Cluster.setGrids(theGrids)
+def Cluster.removeFromTag(theTag, theValue)
 
-	theGrids = theGrids.sort.uniq.join(",");
-	theLog   = `serf tags -set grids=#{theGrids}`.chomp;
+	theValues = getTag(theTag).split(",");
+	theValues.delete(theValue);
+
+	theValue = theValues.sort.uniq.join(",");
+	theValue = nil if (theValue.empty?)
+
+	setTag(theTag, theValue);
+
+end
+
+
+
+
+
+#============================================================================
+#		Cluster.getTag : Get a tag.
+#----------------------------------------------------------------------------
+def Cluster.getTag(theTag, defaultValue="")
+
+	theInfo  = JSON.parse(`serf info -format=json`);
+	theValue = theInfo["tags"].fetch(theTag, defaultValue);
+
+	return(theValue);
+
+end
+
+
+
+
+
+#============================================================================
+#		Cluster.setTag : Set a tag.
+#----------------------------------------------------------------------------
+def Cluster.setTag(theTag, theValue)
+
+	theCmd = (theValue == nil) ? "-delete #{theTag}" : "-set #{theTag}=\"#{theValue}\"";
+	theLog  = `serf tags #{theCmd}`.chomp;
 
 	if (theLog != "Successfully updated agent tags")
-		puts "ERROR - Unable to set tags: #{theLog}";
+		puts "ERROR - Unable to set #{theTag} to #{theValue}: #{theLog}";
 	end
 
 end
@@ -220,3 +241,4 @@ end
 # Module
 #------------------------------------------------------------------------------
 end
+

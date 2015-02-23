@@ -69,7 +69,7 @@ def submitJob(theGrid, theJob)
 	# Prepare the job
 	theID = Job.encodeID(Node.local_address, nextIndex);
 
-	theJob["grid"] = theGrid if (!theGrid.empty?);
+	theJob["grid"] = theGrid;
 	theJob["id"]   = theID;
 
 

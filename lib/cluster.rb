@@ -82,21 +82,19 @@ CONFIG_FILE
 #============================================================================
 #		Cluster.start : Start the cluster.
 #----------------------------------------------------------------------------
-def Cluster.start(theArgs)
+def Cluster.start(theGrids)
 
 	# Get the state we need
-	theConfig = CONFIG_FILE.dup;
-	theGrids  = theArgs["grids"].split(",").sort.uniq.join(",");
-
 	pathConfig = Workspace.pathConfig("cluster");
 	pathLog    = Workspace.pathLog(   "cluster");
 
+	theConfig = CONFIG_FILE.dup;
 	theConfig.gsub!("TOKEN_NODE_OS",    Node.local_os);
 	theConfig.gsub!("TOKEN_NODE_CPUS",  Node.local_cpus.to_s);
 	theConfig.gsub!("TOKEN_NODE_SPEED", Node.local_speed.to_s);
 	theConfig.gsub!("TOKEN_NODE_MEM",   Node.local_memory.to_s);
 	theConfig.gsub!("TOKEN_NODE_LOAD",  Node.local_load.to_s);
-	theConfig.gsub!("TOKEN_GRIDS",      theGrids);
+	theConfig.gsub!("TOKEN_GRIDS",      theGrids.join(","));
 
 	abort("Cluster already running!") if (Daemon.running?("cluster"));
 
@@ -151,7 +149,7 @@ def Cluster.nodes(theGrid)
 
 	# Get the state we need
 	if (!theGrid.empty?)
-		theGrid = "-tag grid=\btheGrid\b";
+		theGrid = "-tag grid=\b#{theGrid}\b";
 	end
 
 

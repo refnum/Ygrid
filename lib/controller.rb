@@ -85,19 +85,19 @@ end
 #============================================================================
 #		Controller.start : Start the controller.
 #----------------------------------------------------------------------------
-def Controller.start(theArgs)
+def Controller.start(theRoot, theGrids)
 
 	# Prepare to start
 	Controller.stop();
 
-	Workspace.create(theArgs["root"]);
+	Workspace.create(theRoot);
 
 
 
 	# Start the servers
-	Agent.start(  theArgs);
-	Syncer.start( theArgs);
-	Cluster.start(theArgs);
+	Agent.start();
+	Syncer.start();
+	Cluster.start(theGrids);
 
 	activeCmds = Daemon.waitFor(Daemon::TIMEOUT, SERVERS);
 
@@ -190,6 +190,11 @@ end
 #		Controller.showStatus : Show the status.
 #----------------------------------------------------------------------------
 def Controller.showStatus(theGrids)
+
+	# Get the state we need
+	theGrids << "" if (theGrids.empty?);
+
+
 
 	# Show the grids
 	Utils.sleepLoop(2) do

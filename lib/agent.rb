@@ -71,7 +71,7 @@ QUEUE_POLL = 1.5;
 #============================================================================
 #		Agent.start : Start the agent.
 #----------------------------------------------------------------------------
-def Agent.start(theArgs)
+def Agent.start
 
 	# Get the state we need
 	abort("Agent already running!") if (Daemon.running?("agent"));

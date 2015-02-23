@@ -57,10 +57,16 @@ require_relative 'lib/utils';
 #------------------------------------------------------------------------------
 def cmdStart(theArgs)
 
+	# Get the state we need
+	theRoot  = theArgs["root"];
+	theGrids = theArgs["grid"].split(",").sort.uniq;
+
+
+
 	# Start the server
 	puts "#{Controller.running? ? "Restarting" : "Starting"} ygrid server...";
 	
-	Controller.start(theArgs);
+	Controller.start(theRoot, theGrids);
 
 end
 
@@ -90,7 +96,7 @@ end
 def cmdJoin(theArgs)
 
 	# Get the state we need
-	theGrids = theArgs["grid"].split(",");
+	theGrids = theArgs["args"].sort.uniq;
 	numGrids = Utils.getCount(theGrids, "grid");
 
 
@@ -112,7 +118,7 @@ end
 def cmdLeave(theArgs)
 
 	# Get the state we need
-	theGrids = theArgs["grid"].split(",");
+	theGrids = theArgs["args"].sort.uniq;
 	numGrids = Utils.getCount(theGrids, "grid");
 
 
@@ -169,11 +175,7 @@ end
 def cmdStatus(theArgs)
 
 	# Get the state we need
-	theGrids = theArgs["grid"].split(",");
-
-	if (theGrids.empty?)
-		theGrids << "";
-	end
+	theGrids = theArgs["grid"].split(",").sort.uniq;
 
 
 
@@ -205,17 +207,19 @@ def cmdHelp
 	puts "        Stop the ygrid server.";
 	puts "";
 	puts "";
-	puts "    ygrid join --grid=grid1,grid2,gridN";
+	puts "    ygrid join grid1 [grid2] [gridN]";
 	puts "";
-	puts "        Joins the specified grids.";
-	puts "";
-	puts "";
-	puts "    ygrid leave --grid=grid1,grid2,gridN";
-	puts "";
-	puts "        Leaves the specified grids.";
+	puts "        Joins the specified grids. Joining a named grid removes this node";
+	puts "        from the default grid.";
 	puts "";
 	puts "";
-	puts "    ygrid status [--grid=name]";
+	puts "    ygrid leave grid1 [grid2] [gridN]";
+	puts "";
+	puts "        Leaves the specified grids. Once all named grids have been left then";
+	puts "        the node returns to the default grid.";
+	puts "";
+	puts "";
+	puts "    ygrid status [--grid=grid1,grid2,gridN]";
 	puts "";
 	puts "        Displays the status of the grid.";
 	puts "";

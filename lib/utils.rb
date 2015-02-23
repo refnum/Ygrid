@@ -199,7 +199,7 @@ def Utils.getArguments
 			end
 		
 		when "join", "leave"
-			if (theArgs["grid"].empty?)
+			if (theArgs["args"].empty?)
 				theArgs["cmd"] = "help";
 			end
 	end

@@ -78,18 +78,18 @@ CONFIG_FILE
 #============================================================================
 #		Syncer.start : Start the syncer.
 #----------------------------------------------------------------------------
-def Syncer.start(theArgs)
+def Syncer.start
 
 	# Get the state we need
-	theConfig = CONFIG_FILE.dup;
-
+	pathRoot   = Workspace.path("");
 	pathConfig = Workspace.pathConfig("syncer");
 	pathLog    = Workspace.pathLog(   "syncer");
 	pathPID    = Workspace.pathPID(   "syncer");
 
+	theConfig = CONFIG_FILE.dup;
 	theConfig.gsub!("TOKEN_PATH_LOG",  pathLog);
 	theConfig.gsub!("TOKEN_PATH_PID",  pathPID);
-	theConfig.gsub!("TOKEN_PATH_ROOT", theArgs["root"]);
+	theConfig.gsub!("TOKEN_PATH_ROOT", pathRoot);
 
 	abort("Syncer already running!") if (Daemon.running?("syncer"));
 

@@ -113,12 +113,11 @@ def Utils.checkInstall
 	# Get the state we need
 	haveRsync = cmdInstalled?("rsync");
 	haveSerf  = cmdInstalled?("serf");
-	theHost   = Host.new();
 
 
 
 	# Show some help
-	case theHost.os()
+	case Host.local_os()
 		when "mac"
 			if (!haveSerf)
 				puts "Unable to locate serf. Install with Homebrew:";

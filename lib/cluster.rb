@@ -93,10 +93,10 @@ def Cluster.start(theArgs)
 	pathLog    = Workspace.pathLog(   "cluster");
 
 	theConfig.gsub!("TOKEN_HOST_OS",    theHost.os);
-	theConfig.gsub!("TOKEN_HOST_CPUS",  theHost.cpus);
-	theConfig.gsub!("TOKEN_HOST_SPEED", theHost.speed);
-	theConfig.gsub!("TOKEN_HOST_MEM",   theHost.memory);
-	theConfig.gsub!("TOKEN_HOST_LOAD",  theHost.load);
+	theConfig.gsub!("TOKEN_HOST_CPUS",  theHost.cpus.to_s);
+	theConfig.gsub!("TOKEN_HOST_SPEED", theHost.speed.to_s);
+	theConfig.gsub!("TOKEN_HOST_MEM",   theHost.memory.to_s);
+	theConfig.gsub!("TOKEN_HOST_LOAD",  theHost.load.to_s);
 	theConfig.gsub!("TOKEN_GRIDS",      theGrids);
 
 	abort("Cluster already running!") if (Daemon.running?("cluster"));

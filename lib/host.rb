@@ -56,12 +56,9 @@ require 'socket';
 #------------------------------------------------------------------------------
 class Host
 
-	attr_reader :os;
-	attr_reader :cpus;
-	attr_reader :speed;
-	attr_reader :memory;
-	attr_reader :load;
+	attr_reader :name;
 	attr_reader :address;
+	attr_reader :tags;
 
 
 
@@ -70,16 +67,22 @@ class Host
 #==============================================================================
 #		Host::initialize : Initialiser.
 #------------------------------------------------------------------------------
-def initialize(theInfo={})
+def initialize(theName=nil, theAddress=nil, theTags=nil)
 
 	# Initialise ourselves
-	@os      = theInfo.fetch("os",      local_os);
-	@cpus    = theInfo.fetch("cpus",    local_cpus);
-	@speed   = theInfo.fetch("speed",   local_speed);
-	@memory  = theInfo.fetch("memory",  local_memory);
-	@load    = theInfo.fetch("load",    local_load);
-	@address = theInfo.fetch("address", local_address);
-	
+	@name    = theName;
+	@address = theAddress;
+	@tags    = theTags;
+
+	if (@tags == nil)
+		@tags         = Hash.new();
+		@tags["os"]   = local_os;
+		@tags["cpus"] = local_cpus;
+		@tags["ghz"]  = local_speed;
+		@tags["mem"]  = local_memory;
+		@tags["load"] = local_load;
+	end
+
 end
 
 
@@ -87,22 +90,64 @@ end
 
 
 #==============================================================================
-#		Host::to_h : Get the host as a hash.
+#		Host::os : Get the OS.
 #------------------------------------------------------------------------------
-def to_h
+def os
 
-	# Get the info
-	theInfo = Hash.new();
+	return(@tags["os"]);
 
-	theInfo["os"]      = @os;
-	theInfo["cpus"]    = @cpus;
-	theInfo["speed"]   = @speed;
-	theInfo["memory"]  = @memory;
-	theInfo["load"]    = @load;
-	theInfo["address"] = @address;
+end
 
-	return(theInfo);
-	
+
+
+
+
+#==============================================================================
+#		Host::cpus : Get the CPU count.
+#------------------------------------------------------------------------------
+def cpus
+
+	return(@tags["cpus"]);
+
+end
+
+
+
+
+
+#==============================================================================
+#		Host::speed : Get the CPU speed in Ghz.
+#------------------------------------------------------------------------------
+def speed
+
+	return(@tags["ghz"]);
+
+end
+
+
+
+
+
+#==============================================================================
+#		Host::memory : Get the memory in Gb.
+#------------------------------------------------------------------------------
+def memory
+
+	return(@tags["mem"]);
+
+end
+
+
+
+
+
+#==============================================================================
+#		Host::load : Get the system load.
+#------------------------------------------------------------------------------
+def load
+
+	return(@tags["load"]);
+
 end
 
 
@@ -110,9 +155,9 @@ end
 
 
 #============================================================================
-#		Host::local_os : Get the local OS.
+#		Host.local_os : Get the local OS.
 #----------------------------------------------------------------------------
-def local_os
+def self.local_os
 
 	case RbConfig::CONFIG['host_os']
 		when /darwin|mac os/
@@ -134,9 +179,9 @@ end
 
 
 #============================================================================
-#		Host::local_cpus : Get the local CPU count.
+#		Host.local_cpus : Get the local CPU count.
 #----------------------------------------------------------------------------
-def local_cpus
+def self.local_cpus
 
 	case local_os()
 		when "mac", "linux"
@@ -152,9 +197,9 @@ end
 
 
 #============================================================================
-#		Host::local_speed : Get the local CPU speed in Ghz.
+#		Host.local_speed : Get the local CPU speed in Ghz.
 #----------------------------------------------------------------------------
-def local_speed
+def self.local_speed
 
 	case local_os()
 		when "mac", "linux"
@@ -170,9 +215,9 @@ end
 
 
 #============================================================================
-#		Host::local_memory : Get the local memory in Gb.
+#		Host.local_memory : Get the local memory in Gb.
 #----------------------------------------------------------------------------
-def local_memory
+def self.local_memory
 
 	case local_os()
 		when "mac", "linux"
@@ -188,9 +233,9 @@ end
 
 
 #============================================================================
-#		Host::local_load : Get the local load.
+#		Host.local_load : Get the local load.
 #----------------------------------------------------------------------------
-def local_load
+def self.local_load
 
 	case local_os()
 		when "mac", "linux"
@@ -209,9 +254,23 @@ end
 
 
 #============================================================================
-#		Host::local_address : Get the local IP address.
+#		Host.local_name : Get the local hostname.
 #----------------------------------------------------------------------------
-def local_address
+def self.local_name
+
+	# Get the hostname
+	return(Socket.hostname);
+
+end
+
+
+
+
+
+#============================================================================
+#		Host.local_address : Get the local IP address.
+#----------------------------------------------------------------------------
+def self.local_address
 
 	# Get the first IPv4 address
 	theList = Socket.ip_address_list;

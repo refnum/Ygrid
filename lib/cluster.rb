@@ -143,25 +143,54 @@ end
 
 
 #============================================================================
+#		Cluster.grids : Get the grids in this cluster.
+#----------------------------------------------------------------------------
+def Cluster.grids
+
+	# Get the state we need
+	#
+	# The empty default grid is always present.
+	theMembers = JSON.parse(`serf members -status alive -format=json`).fetch("members", {});
+	theGrids   = [ "" ];
+
+
+
+	# Get the grids
+	theMembers.each do |theMember|
+		theGrids.concat(theMember["tags"].fetch("grids", "").split(","));
+	end
+
+	return(theGrids.sort.uniq);
+
+end
+
+
+
+
+
+#============================================================================
 #		Cluster.nodes : Get the nodes in a grid.
 #----------------------------------------------------------------------------
 def Cluster.nodes(theGrid)
 
-	# Get the state we need
-	if (!theGrid.empty?)
-		theGrid = "-tag grid=\b#{theGrid}\b";
-	end
-
-
-
-	# Get the nodes
-	theMembers = JSON.parse(`serf members -status alive #{theGrid} -format=json`).fetch("members", {});
+	# Get the state we ned
+	theMembers = JSON.parse(`serf members -status alive -format=json`).fetch("members", {});
 	theNodes   = [];
 
-	theMembers.each do |theMember|
-		theNodes << Node.new(theMember["name"], theMember["addr"], theMember["tags"]);
-	end
 
+
+	# Get the matching nodes
+	#
+	# Nodes that are not in any named grid are in the default empty grid.
+	theMembers.each do |theMember|
+		theGrids = theMember["tags"].fetch("grids", "").split(",");
+		theGrids << "" if (theGrids.empty?);
+
+		if (theGrids.include?(theGrid))
+			theNodes << Node.new(theMember["name"], theMember["addr"], theMember["tags"]);
+		end
+	end
+	
 	return(theNodes);
 
 end

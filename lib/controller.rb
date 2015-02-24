@@ -192,7 +192,9 @@ end
 def Controller.showStatus(theGrids)
 
 	# Get the state we need
-	theGrids << "" if (theGrids.empty?);
+	if (theGrids.empty?)
+		theGrids = Cluster.grids;
+	end
 
 
 

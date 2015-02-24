@@ -186,6 +186,52 @@ end
 
 
 
+#==============================================================================
+#		Node::score : Get the scheduling score.
+#------------------------------------------------------------------------------
+def score
+
+	# Get the score
+	#
+	# For now our heuristics are:
+	#
+	#    o Local node is preferred
+	#    o More CPUs are better
+	#    o More memory is better
+	#    o Higher load is worse
+	#
+	# As we don't apply any weighting then free CPU dominates over memory,
+	# very high loads drop a node's CPU power to 0, and the local node is
+	# fully utilised before any remote nodes.
+	theLoad  = ((load > 0.9) ? 1.0 : load);
+	theScore = ((cpus * speed) * (1.0 - theLoad)) + memory;
+
+	if (address == local_address())
+		theScore = theScore + 9000;
+	end
+
+	return(theScore);
+
+end
+
+
+
+
+
+#============================================================================
+#		Node::<=> : Comparator.
+#----------------------------------------------------------------------------
+def <=> (other)
+
+	# Compare by score
+	return(self.score <=> other.score);
+
+end
+
+
+
+
+
 #============================================================================
 #		Node.local_os : Get the local OS.
 #----------------------------------------------------------------------------

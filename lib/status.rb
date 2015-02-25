@@ -58,19 +58,19 @@ require_relative 'utils';
 module Status
 
 NODE_COLUMNS = {
-	"name" => { "title" => "Node",    "width" => 25 },
-	"addr" => { "title" => "Address", "width" => 18 },
-	"cpus" => { "title" => "CPUs",    "width" => 15 },
-	"mem"  => { "title" => "Memory",  "width" => 14 },
-	"load" => { "title" => "Load",    "width" => 10 },
-	"jobs" => { "title" => "Jobs",    "width" => 4  }
+	:name => { "title" => "Node",    "width" => 25 },
+	:addr => { "title" => "Address", "width" => 18 },
+	:cpus => { "title" => "CPUs",    "width" => 15 },
+	:mem  => { "title" => "Memory",  "width" => 14 },
+	:load => { "title" => "Load",    "width" => 10 },
+	:jobs => { "title" => "Jobs",    "width" => 4  }
 };
 
 JOB_COLUMNS = {
-	"job"    => { "title" => "Job",     "width" => 20 },
-	"source" => { "title" => "Source",  "width" => 20 },
-	"worker" => { "title" => "Worker",  "width" => 20 },
-	"status" => { "title" => "Status",  "width" => 6  },
+	:job    => { "title" => "Job",     "width" => 20 },
+	:source => { "title" => "Source",  "width" => 20 },
+	:worker => { "title" => "Worker",  "width" => 20 },
+	:status => { "title" => "Status",  "width" => 6  },
 };
 
 
@@ -86,8 +86,8 @@ def Status.headerColumns(theInfo)
 	theHeader = "";
 
 	theInfo.each_value do |theColumn|
-		theText   = theColumn["title"];
-		theWidth  = theColumn["width"];
+		theText   = theColumn[:title];
+		theWidth  = theColumn[:width];
 		theHeader << theText.ljust(theWidth);
 	end
 
@@ -107,12 +107,12 @@ def Status.nodeRow(theNode)
 	# Build the columns
 	theColumns = Hash.new();
 
-	theColumns["name"] = theNode.pretty_name;
-	theColumns["addr"] = theNode.address;
-	theColumns["cpus"] = theNode.cpus   + " x " + theNode.speed + "Ghz";
-	theColumns["mem"]  = theNode.memory + "GB";
-	theColumns["load"] = theNode.load;
-	theColumns["jobs"] = "-";
+	theColumns[:name] = theNode.pretty_name;
+	theColumns[:addr] = theNode.address;
+	theColumns[:cpus] = theNode.cpus   + " x " + theNode.speed + "Ghz";
+	theColumns[:mem]  = theNode.memory + "GB";
+	theColumns[:load] = theNode.load;
+	theColumns[:jobs] = "-";
 
 
 
@@ -121,7 +121,7 @@ def Status.nodeRow(theNode)
 
 	NODE_COLUMNS.each_pair do |theKey, theInfo|
 		theText  = theColumns[theKey].to_s;
-		theWidth = theInfo["width"];
+		theWidth = theInfo[:width];
 		
 		theRow << theText.slice(0, theWidth-1).ljust(theWidth);
 	end

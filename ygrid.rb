@@ -58,8 +58,8 @@ require_relative 'lib/utils';
 def cmdStart(theArgs)
 
 	# Get the state we need
-	theRoot  = theArgs["root"];
-	theGrids = theArgs["grid"].split(",").sort.uniq;
+	theRoot  = theArgs[:root];
+	theGrids = theArgs[:grid].split(",").sort.uniq;
 
 
 
@@ -96,7 +96,7 @@ end
 def cmdJoin(theArgs)
 
 	# Get the state we need
-	theGrids = theArgs["args"].sort.uniq;
+	theGrids = theArgs[:args].sort.uniq;
 	numGrids = Utils.getCount(theGrids, "grid");
 
 
@@ -118,7 +118,7 @@ end
 def cmdLeave(theArgs)
 
 	# Get the state we need
-	theGrids = theArgs["args"].sort.uniq;
+	theGrids = theArgs[:args].sort.uniq;
 	numGrids = Utils.getCount(theGrids, "grid");
 
 
@@ -140,8 +140,8 @@ end
 def cmdSubmit(theArgs)
 
 	# Get the state we need
-	theGrid = theArgs["grid"];
-	theFile = File.realpath(theArgs["args"][0]);
+	theGrid = theArgs[:grid];
+	theFile = File.realpath(theArgs[:args][0]);
 
 
 
@@ -175,7 +175,7 @@ end
 def cmdStatus(theArgs)
 
 	# Get the state we need
-	theGrids = theArgs["grid"].split(",").sort.uniq;
+	theGrids = theArgs[:grid].split(",").sort.uniq;
 
 
 
@@ -259,7 +259,7 @@ def ygrid
 
 	# Initialise ourselves
 	theArgs = Utils.getArguments();
-	theCmd  = theArgs["cmd"];
+	theCmd  = theArgs[:cmd];
 
 	Utils.checkInstall();
 	checkStatus(theCmd);

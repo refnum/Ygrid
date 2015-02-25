@@ -168,11 +168,11 @@ def Utils.getArguments
 	theArgs   = Hash.new("");
 	theParser = OptionParser.new do |opts|
 		opts.on("-r", "--root=path") do |thePath|
-			theArgs["root"] = thePath;
+			theArgs[:root] = thePath;
 		end
 
 		opts.on("-g", "--grid=grid1,grid2,gridN") do |theGrid|
-			theArgs["grid"] = theGrid;
+			theArgs[:grid] = theGrid;
 		end
 	end;
 
@@ -181,25 +181,25 @@ def Utils.getArguments
 
 
 	# Extract the arguments
-	theArgs["cmd"] = "help";
+	theArgs[:cmd] = "help";
 
 	if (!ARGV.empty?)
-		theArgs["cmd"]  = ARGV.shift;
-		theArgs["args"] = ARGV;
+		theArgs[:cmd]  = ARGV.shift;
+		theArgs[:args] = ARGV;
 	end
 
 
 
 	# Validate the arguments
-	case theArgs["cmd"]
+	case theArgs[:cmd]
 		when "start"
-			if (theArgs["root"].empty?)
-				theArgs["root"] = "/tmp/ygrid";
+			if (theArgs[:root].empty?)
+				theArgs[:root] = "/tmp/ygrid";
 			end
 		
 		when "join", "leave"
-			if (theArgs["args"].empty?)
-				theArgs["cmd"] = "help";
+			if (theArgs[:args].empty?)
+				theArgs[:cmd] = "help";
 			end
 	end
 	

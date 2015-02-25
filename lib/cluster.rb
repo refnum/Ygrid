@@ -268,6 +268,100 @@ end
 
 
 
+#============================================================================
+#		Cluster.packID : Pack a global ID to a shorter host-specific form.
+#----------------------------------------------------------------------------
+def self.packID(theHost, theID)
+
+	# Get the state we need
+	hostIP  = IPAddr.new(theHost).to_i;
+
+	theIndex = theID.slice( 0, 8).hex;
+	otherIP  = IPAddr.new(theID.slice(-8, 8).hex, Socket::AF_INET).to_i;
+
+
+
+	# Generate the short address
+	#
+	# A 'short address' encodes the difference between our IP address and
+	# the address in the job ID:
+	#
+	#		Host IP		0A000107	(10.0.1.7)
+	#		Other IP	0A000117	(10.0.1.23)
+	#
+	#		Mask		000000FF
+	#		Short IP	00000017
+	#
+	# The short address can then be combined with our IP address to recover
+	# the original IP address in the job ID.
+	theMask = getMask(otherIP ^ hostIP);
+	shortIP = otherIP & theMask;
+
+
+
+	# Pack the ID
+	packedID = "%X.%X" % [theIndex, shortIP];
+
+	return(packedID);
+
+end
+
+
+
+
+
+#============================================================================
+#		Cluster.unpackID : Unpack a host-specific ID to a global ID.
+#----------------------------------------------------------------------------
+def self.unpackID(theHost, packedID)
+
+	# Get the state we need
+	hostIP            = IPAddr.new(theHost).to_i;
+	theIndex, shortIP = packedID.split(".").map { |x| x.hex };
+
+
+
+	# Generate the full address
+	#
+	# Given a 'short address' and the IP address it was generated relative
+	# to we can reapply the mask to obtain the original IP address.
+	theMask = getMask(shortIP);
+	otherIP = shortIP | (hostIP & ~theMask)
+
+
+
+	# Encode the ID
+	otherHost = IPAddr.new(otherIP, Socket::AF_INET);
+
+	return(Job.encodeID(otherHost, theIndex));
+
+end
+
+
+
+
+
+#============================================================================
+#		Cluster.getMask : Get a mask for packing.
+#----------------------------------------------------------------------------
+def self.getMask(theValue)
+
+	# Generate the mask
+	mask1 = (((theValue >> 24) & 0xFF) == 0 ? 0 : 0xFF);
+	mask2 = (((theValue >> 16) & 0xFF) == 0 ? 0 : 0xFF);
+	mask3 = (((theValue >>  8) & 0xFF) == 0 ? 0 : 0xFF);
+	mask4 = (((theValue >>  0) & 0xFF) == 0 ? 0 : 0xFF);
+
+	theMask = (mask1 << 24) | (mask2 << 16) | (mask3 << 8) | (mask4 << 0);
+
+	return(theMask);
+
+end
+
+
+
+
+
 #==============================================================================
 # Module
 #------------------------------------------------------------------------------

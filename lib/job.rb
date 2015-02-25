@@ -4,7 +4,7 @@
 #		job.rb
 #
 #	DESCRIPTION:
-#		Job module.
+#		Job object.
 #
 #	COPYRIGHT:
 #		Copyright (c) 2015, refNum Software
@@ -43,6 +43,9 @@
 #==============================================================================
 # Imports
 #------------------------------------------------------------------------------
+require 'json';
+require 'xmlrpc/utils';
+
 require_relative 'utils';
 
 
@@ -50,27 +53,53 @@ require_relative 'utils';
 
 
 #==============================================================================
-# Module
+# Class
 #------------------------------------------------------------------------------
-module Job
+class Job
+
+	include XMLRPC::Marshallable;
+
+	attr_accessor :grid
+	attr_accessor :host
+	attr_accessor :src_host
+	attr_accessor :src_index
+	attr_accessor :cmd_task
+	attr_accessor :cmd_done
+	attr_accessor :status
+	attr_accessor :inputs
+	attr_accessor :outputs
+
+
+
+
+
+#==============================================================================
+#		Job::initialize : Initialiser.
+#------------------------------------------------------------------------------
+def initialize(thePath)
+
+	# Load the file
+	load(thePath);
+
+end
 
 
 
 
 
 #============================================================================
-#		Job.validate : Validate a job.
+#		Job::validate : Validate a job.
 #----------------------------------------------------------------------------
-def Job.validate(theJob)
+def validate
 
 	# Validate the job
 	theErrors = [];
 	
-	if (!theJob.include?("task"))
-		theErrors << "job is missing 'task'";
+	if (@cmd_task == nil)
+		theErrors << "job is missing 'cmd_task'";
 	
-	elsif (theJob["task"].empty?)
-		theErrors << "job has emtpy 'task'";
+	elsif (@cmd_task.empty?)
+		theErrors << "job has empty 'cmd_task'";
 	end
 
 	return(theErrors);
@@ -81,23 +110,72 @@ end
 
 
 
+#==============================================================================
+#		Job::load : Load a job.
+#------------------------------------------------------------------------------
+def load(thePath)
+
+	# Load the job
+	theInfo = JSON.parse(IO.read(thePath));
+
+	@grid      = theInfo["grid"];
+	@host      = theInfo["host"];
+	@src_host  = theInfo["src_host"];
+	@src_index = theInfo["src_index"];
+	@cmd_task  = theInfo["cmd_task"];
+	@cmd_done  = theInfo["cmd_done"];
+	@status    = theInfo["status"];
+	@inputs    = theInfo["inputs"];
+	@outputs   = theInfo["outputs"];
+
+end
+
+
+
+
+
 #============================================================================
-#		Job.encodeID : Encode a host and index into an ID.
+#		Job::save : Save a job.
 #----------------------------------------------------------------------------
-def Job.encodeID(theHost, theIndex)
+def save(theFile)
 
-	# Obtain the address
-	if (theHost.class != IPAddr)
-		theHost = IPAddr.new(theHost);
-	end
+	# Get the state we need
+	tmpFile = theFile + "_tmp";
+
+	theInfo = {	"grid"      => @grid,
+				"host"      => @host,
+				"src_host"  => @src_host,
+				"src_index" => @src_index,
+				"cmd_task"  => @cmd_task,
+				"cmd_done"  => @cmd_done,
+				"status"    => @status,
+				"inputs"    => @inputs,
+				"outputs"   => @outputs };
 
 
 
-	# Encode the ID
+	# Save the file
 	#
-	# A job ID is a unique 16-character identifier that contains
-	# a host-specific index and the IP address of its host.
-	theID = "%08X%08X" % [theIndex, theHost.to_i];
+	# To ensure the write is atomic we save to a temporary and then rename.
+	IO.write(    tmpFile, JSON.pretty_generate(theInfo));
+	FileUtils.mv(tmpFile, theFile);
+
+end
+
+
+
+
+
+#============================================================================
+#		Job.id : Get the job ID.
+#----------------------------------------------------------------------------
+def id
+
+	# Get the ID
+	#
+	# A job ID is a unique 16-character identifier that contains the IP
+	# address of its source host and a host-specific index.
+	theID = "%08X%08X" % [@src_index, @src_host.to_i];
 
 	return(theID);
 
@@ -107,120 +185,7 @@ end
 
 
 
-#============================================================================
-#		Job.decodeID : Decode the host and index from an ID.
-#----------------------------------------------------------------------------
-def Job.decodeID(theID)
-
-	# Decode the ID
-	theInfo          = Hash.new();
-	theInfo["index"] = theID.slice( 0, 8).hex;
-	theInfo["host"]  = IPAddr.new(theID.slice(-8, 8).hex, Socket::AF_INET);
-
-	return(theInfo);
-
-end
-
-
-
-
-
-#============================================================================
-#		Job.packID : Pack a global ID to a shorter host-specific form.
-#----------------------------------------------------------------------------
-def Job.packID(theHost, theID)
-
-	# Get the state we need
-	hostIP  = IPAddr.new(theHost).to_i;
-	theInfo = Job.decodeID(theID);
-
-	theIndex = theInfo["index"];
-	otherIP  = theInfo["host"].to_i;
-
-
-
-	# Generate the short address
-	#
-	# A 'short address' encodes the difference between our IP address and
-	# the address in the job ID:
-	#
-	#		Host IP		0A000107	(10.0.1.7)
-	#		Other IP	0A000117	(10.0.1.23)
-	#
-	#		Mask		000000FF
-	#		Short IP	00000017
-	#
-	# The short address can then be combined with our IP address to recover
-	# the original IP address in the job ID.
-	theMask = getMask(otherIP ^ hostIP);
-	shortIP = otherIP & theMask;
-
-
-
-	# Pack the ID
-	packedID = "%X.%X" % [theIndex, shortIP];
-
-	return(packedID);
-
-end
-
-
-
-
-
-#============================================================================
-#		Job.unpackID : Unpack a host-specific ID to a global ID.
-#----------------------------------------------------------------------------
-def Job.unpackID(theHost, packedID)
-
-	# Get the state we need
-	hostIP            = IPAddr.new(theHost).to_i;
-	theIndex, shortIP = packedID.split(".").map { |x| x.hex };
-
-
-
-	# Generate the full address
-	#
-	# Given a 'short address' and the IP address it was generated relative
-	# to we can reapply the mask to obtain the original IP address.
-	theMask = getMask(shortIP);
-	otherIP = shortIP | (hostIP & ~theMask)
-
-
-
-	# Encode the ID
-	otherHost = IPAddr.new(otherIP, Socket::AF_INET);
-
-	return(Job.encodeID(otherHost, theIndex));
-
-end
-
-
-
-
-
-#============================================================================
-#		Job.getMask : Get a mask for packing.
-#----------------------------------------------------------------------------
-def Job.getMask(theValue)
-
-	# Generate the mask
-	mask1 = (((theValue >> 24) & 0xFF) == 0 ? 0 : 0xFF);
-	mask2 = (((theValue >> 16) & 0xFF) == 0 ? 0 : 0xFF);
-	mask3 = (((theValue >>  8) & 0xFF) == 0 ? 0 : 0xFF);
-	mask4 = (((theValue >>  0) & 0xFF) == 0 ? 0 : 0xFF);
-
-	theMask = (mask1 << 24) | (mask2 << 16) | (mask3 << 8) | (mask4 << 0);
-
-	return(theMask);
-
-end
-
-
-
-
-
 #==============================================================================
-# Module
+# Class
 #------------------------------------------------------------------------------
 end

@@ -170,8 +170,8 @@ end
 def Controller.submitJob(theGrid, theFile)
 
 	# Prepare the job
-	theJob    = Utils.jsonLoad(theFile);
-	theErrors = Job.validate(theJob);
+	theJob    = Job.new(theFile);
+	theErrors = theJob.validate();
 
 	Utils.failIfError("Failed to submit #{File.basename(theFile)}:", theErrors);
 

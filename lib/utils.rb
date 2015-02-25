@@ -45,7 +45,6 @@
 #------------------------------------------------------------------------------
 require 'fileutils';
 
-require 'json';
 require 'optparse'
 
 require_relative 'node';
@@ -230,38 +229,6 @@ def Utils.sleepLoop(theTime, &block)
 	rescue Exception => e
 		puts e
 	end
-
-end
-
-
-
-
-
-#============================================================================
-#		Utils.jsonLoad : Load a json file.
-#----------------------------------------------------------------------------
-def Utils.jsonLoad(theFile)
-
-	return(JSON.parse(IO.read(theFile)));
-
-end
-
-
-
-
-
-#============================================================================
-#		Utils.jsonSave : Save a json file.
-#----------------------------------------------------------------------------
-def Utils.jsonSave(theFile, theState)
-
-	# Save the file
-	#
-	# We save to a temporary first then rename to ensure the write is atomic.
-	tmpFile = theFile + "_tmp";
-
-	IO.write(    tmpFile, JSON.pretty_generate(theState));
-	FileUtils.mv(tmpFile, theFile);
 
 end
 

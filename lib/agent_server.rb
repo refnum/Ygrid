@@ -67,18 +67,19 @@ class AgentServer
 def submitJob(theGrid, theJob)
 
 	# Prepare the job
-	theID = Job.encodeID(Node.local_address, nextIndex);
+	theJob.grid      = theGrid;
+	theJob.src_host  = Node.local_address;
+	theJob.src_index = self.nextIndex;
 
-	theJob["grid"] = theGrid;
-	theJob["id"]   = theID;
+	jobID = theJob.id;
 
 
 
 	# Save the job
-	thePath = Workspace.pathJobs("queued/#{theID}.job");
-	Utils.jsonSave(thePath, theJob);
+	thePath = Workspace.pathJobs("queued/#{jobID}.job");
+	theJob.save(thePath);
 
-	return(theID);
+	return(jobID);
 
 end
 

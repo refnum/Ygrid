@@ -79,6 +79,16 @@ class Job
 def initialize(thePath)
 
 	# Load the file
+	@grid      = "";
+	@host      = nil;
+	@src_host  = nil;
+	@src_index = nil;
+	@cmd_task  = "";
+	@cmd_done  = "";
+	@status    = nil;
+	@inputs    = [];
+	@outputs   = [];
+
 	load(thePath);
 
 end
@@ -95,11 +105,8 @@ def validate
 	# Validate the job
 	theErrors = [];
 	
-	if (@cmd_task == nil)
-		theErrors << "job is missing 'cmd_task'";
-	
-	elsif (@cmd_task.empty?)
-		theErrors << "job has empty 'cmd_task'";
+	if (@cmd_task.empty?)
+		theErrors << "job does not contain 'cmd_task'";
 	end
 
 	return(theErrors);

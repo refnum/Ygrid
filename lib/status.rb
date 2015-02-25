@@ -105,7 +105,6 @@ end
 def Status.nodeRow(theNode)
 
 	# Build the columns
-	theTags    = theNode.tags;
 	theColumns = Hash.new();
 
 	theColumns["name"] = theNode.pretty_name;

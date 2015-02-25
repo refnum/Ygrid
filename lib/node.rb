@@ -4,7 +4,7 @@
 #		node.rb
 #
 #	DESCRIPTION:
-#		ygrid node.
+#		Node object.
 #
 #	COPYRIGHT:
 #		Copyright (c) 2015, refNum Software

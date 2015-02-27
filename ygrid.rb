@@ -258,6 +258,8 @@ end
 def ygrid
 
 	# Initialise ourselves
+	Thread.abort_on_exception = true;
+
 	theArgs = Utils.getArguments();
 	theCmd  = theArgs[:cmd];
 

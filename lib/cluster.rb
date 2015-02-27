@@ -60,11 +60,14 @@ require_relative 'workspace';
 module Cluster
 
 # Config
+CLUSTER_VERSION = 1;
+
 CONFIG_FILE = <<CONFIG_FILE
 {
     "discover" : "ygrid",
 
     "tags" : {
+	    "ver"   : "#{CLUSTER_VERSION}",
         "os"    : "TOKEN_NODE_OS",
         "cpu"   : "TOKEN_NODE_CPUS",
         "ghz"   : "TOKEN_NODE_SPEED",
@@ -150,7 +153,7 @@ def Cluster.grids
 	# Get the state we need
 	#
 	# The empty default grid is always present.
-	theMembers = JSON.parse(`serf members -status alive -format=json`).fetch("members", {});
+	theMembers = getMembers();
 	theGrids   = [ "" ];
 
 
@@ -174,7 +177,7 @@ end
 def Cluster.nodes(theGrid)
 
 	# Get the state we ned
-	theMembers = JSON.parse(`serf members -status alive -format=json`).fetch("members", {});
+	theMembers = getMembers();
 	theNodes   = [];
 
 
@@ -183,14 +186,16 @@ def Cluster.nodes(theGrid)
 	#
 	# Nodes that are not in any named grid are in the default empty grid.
 	theMembers.each do |theMember|
+
 		theGrids = theMember["tags"].fetch("grids", "").split(",");
 		theGrids << "" if (theGrids.empty?);
 
 		if (theGrids.include?(theGrid))
 			theNodes << Node.new(theMember["name"], theMember["addr"], theMember["tags"]);
 		end
+
 	end
-	
+
 	return(theNodes);
 
 end
@@ -261,6 +266,22 @@ def Cluster.setTag(theTag, theValue)
 	if (theLog != "Successfully updated agent tags")
 		puts "ERROR - Unable to set #{theTag} to #{theValue}: #{theLog}";
 	end
+
+end
+
+
+
+
+
+#============================================================================
+#		Cluster.getMembers : Get the cluster members.
+#----------------------------------------------------------------------------
+def Cluster.getMembers
+
+	# Get the members
+	#
+	# Only alive members with a matching version can be talked to.
+	return(JSON.parse(`serf members -format=json -status alive -tag ver=#{CLUSTER_VERSION}`).fetch("members", {}));
 
 end
 

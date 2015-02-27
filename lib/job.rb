@@ -57,17 +57,32 @@ require_relative 'utils';
 #------------------------------------------------------------------------------
 class Job
 
-	include XMLRPC::Marshallable;
+# Includes
+include XMLRPC::Marshallable;
 
-	attr_accessor :grid
-	attr_accessor :host
-	attr_accessor :src_host
-	attr_accessor :src_index
-	attr_accessor :cmd_task
-	attr_accessor :cmd_done
-	attr_accessor :status
-	attr_accessor :inputs
-	attr_accessor :outputs
+
+# Attributes
+attr_accessor :grid
+attr_accessor :host
+attr_accessor :src_host
+attr_accessor :src_index
+attr_accessor :cmd_task
+attr_accessor :cmd_done
+attr_accessor :status
+attr_accessor :inputs
+attr_accessor :outputs
+
+
+# Constants
+DEFAULT_GRID      = "";
+DEFAULT_HOST      = nil;
+DEFAULT_SRC_HOST  = nil;
+DEFAULT_SRC_INDEX = nil;
+DEFAULT_CMD_TASK  = "";
+DEFAULT_CMD_DONE  = "";
+DEFAULT_STATUS    = nil;
+DEFAULT_INPUTS    = [];
+DEFAULT_OUTPUTS   = [];
 
 
 
@@ -79,16 +94,6 @@ class Job
 def initialize(thePath)
 
 	# Load the file
-	@grid      = "";
-	@host      = nil;
-	@src_host  = nil;
-	@src_index = nil;
-	@cmd_task  = "";
-	@cmd_done  = "";
-	@status    = nil;
-	@inputs    = [];
-	@outputs   = [];
-
 	load(thePath);
 
 end
@@ -125,15 +130,15 @@ def load(thePath)
 	# Load the job
 	theInfo = JSON.parse(IO.read(thePath));
 
-	@grid      = theInfo["grid"];
-	@host      = theInfo["host"];
-	@src_host  = theInfo["src_host"];
-	@src_index = theInfo["src_index"];
-	@cmd_task  = theInfo["cmd_task"];
-	@cmd_done  = theInfo["cmd_done"];
-	@status    = theInfo["status"];
-	@inputs    = theInfo["inputs"];
-	@outputs   = theInfo["outputs"];
+	@grid      = theInfo.fetch("grid",        DEFAULT_GRID);
+	@host      = theInfo.include?("host")     ? IPAddr.new(theInfo["host"])     : DEFAULT_HOST;
+	@src_host  = theInfo.include?("src_host") ? IPAddr.new(theInfo["src_host"]) : DEFAULT_HOST;
+	@src_index = theInfo.fetch("src_index",   DEFAULT_SRC_INDEX);
+	@cmd_task  = theInfo.fetch("cmd_task",    DEFAULT_CMD_TASK);
+	@cmd_done  = theInfo.fetch("cmd_done",    DEFAULT_CMD_DONE);
+	@status    = theInfo.fetch("status",      DEFAULT_STATUS);
+	@inputs    = theInfo.fetch("inputs",      DEFAULT_INPUTS);
+	@outputs   = theInfo.fetch("outputs",     DEFAULT_OUTPUTS);
 
 end
 
@@ -148,23 +153,24 @@ def save(theFile)
 
 	# Get the state we need
 	tmpFile = theFile + "_tmp";
+	theInfo = Hash.new();
 
-	theInfo = {	"grid"      => @grid,
-				"host"      => @host,
-				"src_host"  => @src_host,
-				"src_index" => @src_index,
-				"cmd_task"  => @cmd_task,
-				"cmd_done"  => @cmd_done,
-				"status"    => @status,
-				"inputs"    => @inputs,
-				"outputs"   => @outputs };
+	theInfo["grid"]      = @grid      if (@grid      != DEFAULT_GRID);
+	theInfo["host"]      = @host      if (@host      != DEFAULT_HOST);
+	theInfo["src_host"]  = @src_host  if (@src_host  != DEFAULT_SRC_HOST);
+	theInfo["src_index"] = @src_index if (@src_index != DEFAULT_SRC_INDEX);
+	theInfo["cmd_task"]  = @cmd_task  if (@cmd_task  != DEFAULT_CMD_TASK);
+	theInfo["cmd_done"]  = @cmd_done  if (@cmd_done  != DEFAULT_CMD_DONE);
+	theInfo["status"]    = @status    if (@status    != DEFAULT_STATUS);
+	theInfo["inputs"]    = @inputs    if (@inputs    != DEFAULT_INPUTS);
+	theInfo["outputs"]   = @outputs   if (@outputs   != DEFAULT_OUTPUTS);
 
 
 
 	# Save the file
 	#
 	# To ensure the write is atomic we save to a temporary and then rename.
-	IO.write(    tmpFile, JSON.pretty_generate(theInfo));
+	IO.write(    tmpFile, JSON.pretty_generate(theInfo) + "\n");
 	FileUtils.mv(tmpFile, theFile);
 
 end
@@ -174,7 +180,7 @@ end
 
 
 #============================================================================
-#		Job.id : Get the job ID.
+#		Job::id : Get the job ID.
 #----------------------------------------------------------------------------
 def id
 

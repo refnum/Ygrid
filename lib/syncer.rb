@@ -81,7 +81,7 @@ CONFIG_FILE
 def Syncer.start
 
 	# Get the state we need
-	pathRoot   = Workspace.path("");
+	pathRoot   = Workspace.path();
 	pathConfig = Workspace.pathConfig("syncer");
 	pathLog    = Workspace.pathLog(   "syncer");
 	pathPID    = Workspace.pathPID(   "syncer");

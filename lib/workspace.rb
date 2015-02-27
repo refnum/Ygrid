@@ -85,6 +85,7 @@ def Workspace.create(theRoot)
 
 	# Create the workspace
 	FileUtils.mkdir_p(Workspace.path("jobs/queued"));
+	FileUtils.mkdir_p(Workspace.path("jobs/opened"));
 	FileUtils.mkdir_p(Workspace.path("jobs/active"));
 	FileUtils.mkdir_p(Workspace.path("jobs/completed"));
 
@@ -117,6 +118,7 @@ def Workspace.cleanup
 	# persist so that any currently distributed jobs will be ignored as stale
 	# if the server is restarted before they are returned.
 	FileUtils.rm_rf(Workspace.path("jobs/queued"));
+	FileUtils.rm_rf(Workspace.path("jobs/opened"));
 	FileUtils.rm_rf(Workspace.path("jobs/active"));
 	FileUtils.rm_rf(Workspace.path("jobs/completed"));
 
@@ -141,7 +143,7 @@ end
 #============================================================================
 #		Workspace.path : Get a path.
 #----------------------------------------------------------------------------
-def Workspace.path(thePath)
+def Workspace.path(thePath="")
 
 	if (File.exists?(PATH_LINK))
 		theRoot = File.realpath(PATH_LINK);
@@ -158,11 +160,63 @@ end
 
 
 #============================================================================
-#		Workspace.pathJobs : Get a path to a job item.
+#		Workspace.pathJobs : Get a path to the jobs folder.
 #----------------------------------------------------------------------------
 def Workspace.pathJobs(thePath="")
 
 	return(Workspace.path("jobs/#{thePath}"));
+
+end
+
+
+
+
+
+#============================================================================
+#		Workspace.pathQueuedJob : Get the path to a queued job.
+#----------------------------------------------------------------------------
+def Workspace.pathQueuedJob(jobID)
+
+	return(Workspace.pathJobs("/queued/#{jobID}.job"));
+
+end
+
+
+
+
+
+#============================================================================
+#		Workspace.pathOpenedJob : Get the path to an opened job.
+#----------------------------------------------------------------------------
+def Workspace.pathOpenedJob(jobID)
+
+	return(Workspace.pathJobs("/opened/#{jobID}.job"));
+
+end
+
+
+
+
+
+#============================================================================
+#		Workspace.pathActiveJobDir : Get the path to an active job's folder.
+#----------------------------------------------------------------------------
+def Workspace.pathActiveJobDir(jobID)
+
+	return(Workspace.pathJobs("/active/#{jobID}"));
+
+end
+
+
+
+
+
+#============================================================================
+#		Workspace.pathCompletedJob : Get the path to a completed job.
+#----------------------------------------------------------------------------
+def Workspace.pathCompletedJob(jobID)
+
+	return(Workspace.pathJobs("/completed/#{jobID}.job"));
 
 end
 

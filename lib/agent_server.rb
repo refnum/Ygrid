@@ -76,7 +76,7 @@ def submitJob(theGrid, theJob)
 
 
 	# Save the job
-	thePath = Workspace.pathJobs("queued/#{jobID}.job");
+	thePath = Workspace.pathQueuedJob(jobID);
 	theJob.save(thePath);
 
 	return(jobID);

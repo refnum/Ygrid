@@ -133,7 +133,7 @@ end
 def Agent.startServer()
 
 	# Create the server
-	theServer = XMLRPC::Server.new(AGENT_PORT);
+	theServer = XMLRPC::Server.new(AGENT_PORT, Node.local_address.to_s);
 	theServer.add_handler(XMLRPC::iPIMethods("ygrid"), AgentServer.new)
 
 
@@ -195,7 +195,7 @@ end
 def Agent.callLocal(theCmd, *theArgs)
 
 	# Call the server
-	callServer(nil, theCmd, *theArgs);
+	callServer(Node.local_address, theCmd, *theArgs);
 
 end
 
@@ -206,13 +206,13 @@ end
 #============================================================================
 #		Agent.callServer : Call a server.
 #----------------------------------------------------------------------------
-def Agent.callServer(theHost, theCmd, *theArgs)
+def Agent.callServer(theAddress, theCmd, *theArgs)
 
 	# Call a server
 	theResult = nil;
 
 	begin
-		theServer = XMLRPC::Client.new(theHost, nil, AGENT_PORT);
+		theServer = XMLRPC::Client.new(theAddress.to_s, nil, AGENT_PORT);
 		theResult = theServer.call("ygrid." + theCmd, *theArgs);
 
 	rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH

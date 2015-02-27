@@ -43,6 +43,8 @@
 #==============================================================================
 # Imports
 #------------------------------------------------------------------------------
+require 'fileutils';
+
 require_relative 'job';
 require_relative 'node';
 require_relative 'utils';
@@ -69,7 +71,7 @@ def submitJob(theGrid, theJob)
 	# Prepare the job
 	theJob.grid      = theGrid;
 	theJob.src_host  = Node.local_address;
-	theJob.src_index = self.nextIndex;
+	theJob.src_index = nextIndex();
 
 	jobID = theJob.id;
 
@@ -80,6 +82,24 @@ def submitJob(theGrid, theJob)
 	theJob.save(thePath);
 
 	return(jobID);
+
+end
+
+
+
+
+
+#==============================================================================
+#		AgentServer::openJob : Open a job.
+#------------------------------------------------------------------------------
+def openJob(jobID)
+
+	# TODO: check for free slots
+	pathActive = Workspace.pathActiveJobDir(jobID);
+
+	FileUtils.mkdir_p(pathActive);
+
+	return(true);
 
 end
 

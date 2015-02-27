@@ -80,8 +80,8 @@ def Agent.start
 
 	# Start the server
 	Daemon.start("agent") do
-		Agent.startScheduler();
-		Agent.startServer();
+		startScheduler();
+		startServer();
 	end
 
 end
@@ -114,10 +114,7 @@ def Agent.startScheduler()
 	# Start the scheduler
 	Thread.new do
 		loop do
-			pathJob = getNextJob();
-			theNode = getBestNode();
-
-			scheduleJob(pathJob, theNode);
+			dispatchJobs(waitForJobs());
 		end
 	end
 
@@ -147,16 +144,67 @@ end
 
 
 #============================================================================
-#		Agent.getNextJob : Get the next job.
+#		Agent.waitForJobs : Wait for some jobs.
 #----------------------------------------------------------------------------
-def Agent.getNextJob
+def Agent.waitForJobs
 
-	# Wait for a job
+	# Get the state we need
+	thePath = File.dirname(Workspace.pathQueuedJob("x")) + "/*.job";
+	theJobs = [];
+
+
+
+	# Wait for jobs
+	puts "Waiting for jobs...";
+	
 	loop do
-		theFiles = Dir.glob(Workspace.pathJobs("queued/*.job"));
-		return(theFiles[0]) if (!theFiles.empty?);
+		Dir.glob(thePath).each do |theFile|
+			theJobs << Job.new(theFile);
+		end
 
+		break if (!theJobs.empty?);
 		sleep(QUEUE_POLL);
+	end
+
+	return(theJobs);
+
+end
+
+
+
+
+
+#============================================================================
+#		Agent.dispatchJobs : Dispatch some jobs.
+#----------------------------------------------------------------------------
+def Agent.dispatchJobs(theJobs)
+
+	# Get the state we need
+	numJobs   = Utils.getCount(theJobs, "job");
+	fullGrids = [];
+
+
+
+	# Process the jobs
+	#
+	# Jobs that can't be dispatched will defer any other jobs on that grid.
+	#
+	# This ensures they remain in the queue and will be processed as FIFO
+	# when that grid becomes available.
+	puts "Dispatching #{numJobs}..."; 
+
+	theJobs.each do |theJob|
+
+		if (fullGrids.include?(theJob.grid))
+			puts "Unable to dispatch #{theJob.id} as grid #{theJob.grid} is full";
+			continue;
+		end
+		
+		
+		if (!dispatchJobToGrid(theJob))
+			fullGrids << theJob.grid;
+		end	
+
 	end
 
 end
@@ -166,11 +214,28 @@ end
 
 
 #============================================================================
-#		Agent.getBestNode : Get the best node.
+#		Agent.dispatchJobToGrid : Dispatch a job to its grid.
 #----------------------------------------------------------------------------
-def Agent.getBestNode
-	# todo
-	abort("Agent.getBestNode - todo");
+def Agent.dispatchJobToGrid(theJob)
+
+	# Get the state we need
+	theNodes  = Cluster.nodes(theJob.grid);
+	didAccept = false;
+
+
+
+	# Dispatch the job
+	#
+	# Nodes are sorted by priority via Node.score.
+	puts "Attempting to dispatch job #{theJob.id} to #{theNodes.size} nodes";
+
+	theNodes.sort.each do |theNode|
+		didAccept = dispatchJobToNode(theNode, theJob);
+		break if didAccept;
+	end
+
+	return(didAccept);
+
 end
 
 
@@ -178,11 +243,57 @@ end
 
 
 #============================================================================
-#		Agent.scheduleJob : Schedule a job.
+#		Agent.dispatchJobToNode : Dispatch a job to a node.
 #----------------------------------------------------------------------------
-def Agent.scheduleJob(pathJob, theNode)
-	# todo
-	abort("Agent.scheduleJob - todo");
+def Agent.dispatchJobToNode(theNode, theJob)
+
+	# Open the job
+	puts "Attempting to dispatch job #{theJob.id} to #{theNode.address}";
+	
+	didAccept = callServer(theNode.address, "openJob", theJob.id);
+
+	puts "#{theNode.address} #{didAccept ? 'accepted' : 'rejected'} job #{theJob.id}";
+
+
+
+	# Start the monitor
+	if (didAccept)
+		startMonitor(theNode, theJob);
+	end
+
+	return(didAccept);
+
+end
+
+
+
+
+
+#============================================================================
+#		Agent.startMonitor : Start a job monitor.
+#----------------------------------------------------------------------------
+def Agent.startMonitor(theNode, theJob)
+
+	# Get the state we need
+	pathQueued = Workspace.pathQueuedJob(theJob.id);
+	pathOpened = Workspace.pathQueuedJob(theJob.id);
+
+
+
+	# Update the job
+	theJob.host = theNode.address;
+	
+	FileUtils.mv(pathQueued, pathOpened);
+
+
+
+	# Start the monitoring thread
+	Thread.new do
+
+		puts "TODO: process the job!";
+
+	end
+
 end
 
 

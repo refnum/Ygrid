@@ -57,17 +57,20 @@ require_relative 'workspace';
 module Syncer
 
 # Config
+SYNCER_VERBOSE = "--verbose";
+SYNCER_PORT    = 7948;
+
 CONFIG_FILE = <<CONFIG_FILE
 log file  = TOKEN_PATH_LOG
 pid file  = TOKEN_PATH_PID
 
-port       = 7948
+port       = #{SYNCER_PORT}
 use chroot = no
 list       = no
 read only  = no
 
 [ygrid]
-path = TOKEN_PATH_ROOT
+path = TOKEN_PATH_WORKSPACE
 
 CONFIG_FILE
 
@@ -81,15 +84,15 @@ CONFIG_FILE
 def Syncer.start
 
 	# Get the state we need
-	pathRoot   = Workspace.path();
-	pathConfig = Workspace.pathConfig("syncer");
-	pathLog    = Workspace.pathLog(   "syncer");
-	pathPID    = Workspace.pathPID(   "syncer");
+	pathWorkspace = Workspace.path();
+	pathConfig    = Workspace.pathConfig("syncer");
+	pathLog       = Workspace.pathLog(   "syncer");
+	pathPID       = Workspace.pathPID(   "syncer");
 
 	theConfig = CONFIG_FILE.dup;
-	theConfig.gsub!("TOKEN_PATH_LOG",  pathLog);
-	theConfig.gsub!("TOKEN_PATH_PID",  pathPID);
-	theConfig.gsub!("TOKEN_PATH_ROOT", pathRoot);
+	theConfig.gsub!("TOKEN_PATH_LOG",       pathLog);
+	theConfig.gsub!("TOKEN_PATH_PID",       pathPID);
+	theConfig.gsub!("TOKEN_PATH_WORKSPACE", pathWorkspace);
 
 	abort("Syncer already running!") if (Daemon.running?("syncer"));
 

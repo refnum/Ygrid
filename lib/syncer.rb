@@ -43,6 +43,8 @@
 #==============================================================================
 # Imports
 #------------------------------------------------------------------------------
+require 'tempfile';
+
 require_relative 'daemon';
 require_relative 'utils';
 require_relative 'workspace';
@@ -102,6 +104,167 @@ def Syncer.start
 	IO.write(pathConfig, theConfig);
 
 	system("rsync", "--daemon", "--config=#{pathConfig}");
+
+end
+
+
+
+
+
+#============================================================================
+#		Syncer.sendJob : Send a job to a node.
+#----------------------------------------------------------------------------
+def Syncer.sendJob(theNode, theID)
+
+	# Send the job
+	#
+	# The job is transferred from the opened folder to the active folder:
+	#
+	#		ygrid/jobs/opened/0000003E0A000102 => ygrid/jobs/active/0000003E0A000102
+	#
+	# As our path is just the job ID our source is the parent folder.
+	pathOpened = File.dirname(Workspace.pathOpenedJobDir(theID));
+	pathActive = File.dirname(Workspace.pathActiveJobDir(theID));
+	dstURL     = workspaceURL(theNode, pathActive);
+
+	transferFiles(theNode, [theID], pathOpened, dstURL);
+
+end
+
+
+
+
+
+#============================================================================
+#		Syncer.fetchJob : Fetch a job from a node.
+#----------------------------------------------------------------------------
+def Syncer.fetchJob(theNode, theID)
+
+	# Fetch the job
+	#
+	# The job is transferred from the active folder to the completed folder:
+	#
+	#		ygrid/jobs/active/0000003E0A000102 => ygrid/jobs/completed/0000003E0A000102
+	#
+	# As our path is just the job ID our destination is the parent folder.
+	pathActive    = File.dirname(Workspace.pathActiveJobDir(   theID));
+	pathCompleted = File.dirname(Workspace.pathCompletedJobDir(theID));
+	srcURL        = workspaceURL(theNode, pathActive);
+
+	transferFiles(theNode, [theID], srcURL, pathCompleted);
+
+end
+
+
+
+
+
+#============================================================================
+#		Syncer.sendFiles : Send files to a node.
+#----------------------------------------------------------------------------
+def Syncer.sendFiles(theNode, theFiles)
+
+	# Send the files
+	#
+	# Transfers a list of absolute paths to the host location for the node:
+	#
+	#		/path/to/file.txt  =>  ygrid/hosts/10.0.1.2/path/to/file.txt
+	#
+	# As our paths are absolute paths our source is "/".
+	pathHost = Workspace.pathHost(theNode.address);
+	dstURL   = workspaceURL(theNode, pathHost);
+
+	transferFiles(theNode, theFiles, "/", dstURL);
+
+end
+
+
+
+
+
+#============================================================================
+#		Syncer.fetchFiles : Fetch files from a node.
+#----------------------------------------------------------------------------
+def Syncer.fetchFiles(theNode, theFiles)
+
+	# Fetch the files
+	#
+	# Retrieves a list of absolute paths from the host location for the node:
+	#
+	#		ygrid/hosts/10.0.1.2/path/to/file.txt  =>  /path/to/file.txt
+	#
+	# As our paths are absolute paths our destination is "/".
+	pathHost = Workspace.pathHost(theNode.address);
+	srcURL   = workspaceURL(theNode, pathHost);
+
+	transferFiles(theNode, theFiles, srcURL, "/");
+
+end
+
+
+
+
+
+#============================================================================
+#		Syncer.transferFiles : Transfer files.
+#----------------------------------------------------------------------------
+def Syncer.transferFiles(theNode, theFiles, theSrc, theDst)
+
+	# Get the state we need
+	pathLog = Workspace.pathLog("syncer");
+	tmpFile = tmpFileList(theFiles);
+
+
+	# Transfer the files
+	`rsync -az --recursive #{SYNCER_VERBOSE} --files-from="#{tmpFile.path}" #{theSrc} #{theDst} >> "#{pathLog}" 2>&1`;
+
+	tmpFile.unlink();
+
+end
+
+
+
+
+
+#============================================================================
+#		Syncer.tmpFileList : Create a temporary file list.
+#----------------------------------------------------------------------------
+def Syncer.tmpFileList(thePaths)
+
+	# Create the file
+	theFile = Tempfile.new('ygrid')
+
+
+	# Write the file list
+	thePaths.each do |thePath|
+		theFile.write(thePath + "\n");
+	end
+
+	theFile.close();
+	
+	return(theFile);
+
+end
+
+
+
+
+
+#============================================================================
+#		Syncer.workspaceURL : Get the URL for a workspace path.
+#----------------------------------------------------------------------------
+def Syncer.workspaceURL(theNode, thePath)
+
+	# Construct the URL
+	#
+	# The rsync module maps to the workspace root so removing our local
+	# workspace path lets us build a URL for the remote workspace.
+	pathWorkspace = Workspace.path();
+	
+	thePath = thePath[pathWorkspace.size()..-1];
+	theURL  = "rsync://#{theNode.address}:#{SYNCER_PORT}/ygrid/#{thePath}";
+
+	return(theURL);
 
 end
 

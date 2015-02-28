@@ -186,11 +186,11 @@ end
 
 
 #============================================================================
-#		Workspace.pathOpenedJob : Get the path to an opened job.
+#		Workspace.pathOpenedJobDir : Get the path to an opened job dir.
 #----------------------------------------------------------------------------
-def Workspace.pathOpenedJob(jobID)
+def Workspace.pathOpenedJobDir(jobID)
 
-	return(Workspace.pathJobs("/opened/#{jobID}.job"));
+	return(Workspace.pathJobs("/opened/#{jobID}"));
 
 end
 
@@ -199,7 +199,7 @@ end
 
 
 #============================================================================
-#		Workspace.pathActiveJobDir : Get the path to an active job's folder.
+#		Workspace.pathActiveJobDir : Get the path to an active job dir.
 #----------------------------------------------------------------------------
 def Workspace.pathActiveJobDir(jobID)
 
@@ -212,11 +212,11 @@ end
 
 
 #============================================================================
-#		Workspace.pathCompletedJob : Get the path to a completed job.
+#		Workspace.pathCompletedJobDir : Get the path to a completed job dir.
 #----------------------------------------------------------------------------
-def Workspace.pathCompletedJob(jobID)
+def Workspace.pathCompletedJobDir(jobID)
 
-	return(Workspace.pathJobs("/completed/#{jobID}.job"));
+	return(Workspace.pathJobs("/completed/#{jobID}"));
 
 end
 
@@ -256,6 +256,19 @@ end
 def Workspace.pathPID(theCmd)
 
 	return(Workspace.path("run/#{theCmd}.pid"));
+
+end
+
+
+
+
+
+#============================================================================
+#		Workspace.pathHost : Get the path to a host's root.
+#----------------------------------------------------------------------------
+def Workspace.pathHost(theHost)
+
+	return(Workspace.path("hosts/#{theHost}"));
 
 end
 

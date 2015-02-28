@@ -95,7 +95,7 @@ end
 def openJob(jobID)
 
 	# TODO: check for free slots
-	pathActive = Workspace.pathActiveJobDir(jobID);
+	pathActive = Workspace.pathActiveJob(jobID);
 
 	FileUtils.mkdir_p(pathActive);
 

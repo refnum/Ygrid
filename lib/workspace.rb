@@ -186,9 +186,9 @@ end
 
 
 #============================================================================
-#		Workspace.pathOpenedJobDir : Get the path to an opened job dir.
+#		Workspace.pathOpenedJob : Get the path to an opened job.
 #----------------------------------------------------------------------------
-def Workspace.pathOpenedJobDir(jobID)
+def Workspace.pathOpenedJob(jobID)
 
 	return(Workspace.pathJobs("/opened/#{jobID}"));
 
@@ -199,9 +199,9 @@ end
 
 
 #============================================================================
-#		Workspace.pathActiveJobDir : Get the path to an active job dir.
+#		Workspace.pathActiveJob : Get the path to an active job.
 #----------------------------------------------------------------------------
-def Workspace.pathActiveJobDir(jobID)
+def Workspace.pathActiveJob(jobID)
 
 	return(Workspace.pathJobs("/active/#{jobID}"));
 
@@ -212,9 +212,9 @@ end
 
 
 #============================================================================
-#		Workspace.pathCompletedJobDir : Get the path to a completed job dir.
+#		Workspace.pathCompletedJob : Get the path to a completed job.
 #----------------------------------------------------------------------------
-def Workspace.pathCompletedJobDir(jobID)
+def Workspace.pathCompletedJob(jobID)
 
 	return(Workspace.pathJobs("/completed/#{jobID}"));
 

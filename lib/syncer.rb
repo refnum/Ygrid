@@ -123,8 +123,8 @@ def Syncer.sendJob(theNode, theID)
 	#		ygrid/jobs/opened/0000003E0A000102 => ygrid/jobs/active/0000003E0A000102
 	#
 	# As our path is just the job ID our source is the parent folder.
-	pathOpened = File.dirname(Workspace.pathOpenedJobDir(theID));
-	pathActive = File.dirname(Workspace.pathActiveJobDir(theID));
+	pathOpened = File.dirname(Workspace.pathOpenedJob(theID));
+	pathActive = File.dirname(Workspace.pathActiveJob(theID));
 	dstURL     = workspaceURL(theNode, pathActive);
 
 	transferFiles(theNode, [theID], pathOpened, dstURL);
@@ -147,8 +147,8 @@ def Syncer.fetchJob(theNode, theID)
 	#		ygrid/jobs/active/0000003E0A000102 => ygrid/jobs/completed/0000003E0A000102
 	#
 	# As our path is just the job ID our destination is the parent folder.
-	pathActive    = File.dirname(Workspace.pathActiveJobDir(   theID));
-	pathCompleted = File.dirname(Workspace.pathCompletedJobDir(theID));
+	pathActive    = File.dirname(Workspace.pathActiveJob(   theID));
+	pathCompleted = File.dirname(Workspace.pathCompletedJob(theID));
 	srcURL        = workspaceURL(theNode, pathActive);
 
 	transferFiles(theNode, [theID], srcURL, pathCompleted);

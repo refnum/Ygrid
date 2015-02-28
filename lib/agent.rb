@@ -276,14 +276,15 @@ def Agent.startMonitor(theNode, theJob)
 
 	# Get the state we need
 	pathQueued = Workspace.pathQueuedJob(theJob.id);
-	pathOpened = Workspace.pathQueuedJob(theJob.id);
+	pathOpened = Workspace.pathOpenedJob(theJob.id);
 
 
 
-	# Update the job
+	# Open the job
 	theJob.host = theNode.address;
-	
-	FileUtils.mv(pathQueued, pathOpened);
+
+	FileUtils.mkdir_p(pathOpened);
+	FileUtils.mv(pathQueued, "#{pathOpened}/job.json");
 
 
 

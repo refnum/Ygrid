@@ -280,11 +280,13 @@ def Agent.startMonitor(theNode, theJob)
 
 
 
-	# Open the job
+	# Send the job
 	theJob.host = theNode.address;
 
 	FileUtils.mkdir_p(pathOpened);
 	FileUtils.mv(pathQueued, "#{pathOpened}/job.json");
+
+	Syncer.sendJob(theNode, theJob.id);
 
 
 

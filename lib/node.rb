@@ -71,15 +71,15 @@ def initialize(theName=nil, theAddress=nil, theTags=nil)
 
 	# Local node
 	if (theName == nil)
-		@name    = local_name;
-		@address = local_address;
+		@name    = Node.local_name;
+		@address = Node.local_address;
 		@tags    = Hash.new();
 
-		@tags["os"]   = local_os;
-		@tags["cpu"]  = local_cpus;
-		@tags["ghz"]  = local_speed;
-		@tags["mem"]  = local_memory;
-		@tags["load"] = local_load;
+		@tags["os"]   = Node.local_os;
+		@tags["cpu"]  = Node.local_cpus;
+		@tags["ghz"]  = Node.local_speed;
+		@tags["mem"]  = Node.local_memory;
+		@tags["load"] = Node.local_load;
 
 
 	# Specified node
@@ -336,7 +336,7 @@ end
 #----------------------------------------------------------------------------
 def self.local_name
 
-	return(Socket.hostname);
+	return(Socket.gethostname());
 
 end
 

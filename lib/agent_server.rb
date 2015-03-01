@@ -44,6 +44,7 @@
 # Imports
 #------------------------------------------------------------------------------
 require 'fileutils';
+require 'yaml/store';
 
 require_relative 'job';
 require_relative 'node';
@@ -64,6 +65,19 @@ class AgentServer
 
 
 #==============================================================================
+#		AgentServer::initialize : Initialiser.
+#------------------------------------------------------------------------------
+def initialize
+
+	@store = YAML::Store.new(Workspace.pathJobs("state.yml"));
+	
+end
+
+
+
+
+
+#==============================================================================
 #		AgentServer::submitJob : Submit a job.
 #------------------------------------------------------------------------------
 def submitJob(theGrid, theJob)
@@ -71,7 +85,7 @@ def submitJob(theGrid, theJob)
 	# Prepare the job
 	theJob.grid      = theGrid;
 	theJob.src_host  = Node.local_address;
-	theJob.src_index = nextIndex();
+	theJob.src_index = nextJobIndex();
 
 	jobID = theJob.id;
 
@@ -155,31 +169,20 @@ end
 
 
 #==============================================================================
-#		AgentServer::nextIndex : Allocate the next job index.
+#		AgentServer::nextJobIndex : Get the next job index.
 #------------------------------------------------------------------------------
-def nextIndex
+def nextJobIndex
 
-	# Get the last index
-	theFile = Workspace.pathJobs("last.idx");
+	nextIndex = nil;
 
-	if (File.exists?(theFile))
-		theIndex = IO.read(theFile).to_i;
-	else
-		theIndex = 0;
+	@store.transaction do
+		nextIndex = @store.fetch(:index, 0) + 1;
+		nextIndex = 1 if (nextIndex > 0xFFFFFFFF);
+
+		@store[:index] = nextIndex;
 	end
 
-
-
-	# Get the next index
-	theIndex = theIndex + 1;
-
-	if (theIndex >= 0xFFFFFFFF)
-		theIndex = 1;
-	end
-
-	IO.write(theFile, theIndex);
-
-	return(theIndex);
+	return(nextIndex);
 
 end
 

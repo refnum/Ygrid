@@ -90,7 +90,7 @@ end
 
 
 #==============================================================================
-#		AgentServer::openJob : Open a job.
+#		AgentServer::openJob : Attempt to open a job.
 #------------------------------------------------------------------------------
 def openJob(jobID)
 
@@ -100,6 +100,53 @@ def openJob(jobID)
 	FileUtils.mkdir_p(pathActive);
 
 	return(true);
+
+end
+
+
+
+
+
+#==============================================================================
+#		AgentServer::closeJob : Close a job.
+#------------------------------------------------------------------------------
+def closeJob(jobID)
+
+	# Get the state we need
+	pathJobDir = Workspace.pathActiveJob(jobID);
+
+
+
+	# Close the job
+	FileUtils.rm_rf(pathJobDir);
+	
+	# TODO: increment free slots
+
+end
+
+
+
+
+
+#==============================================================================
+#		AgentServer::executeJob : Execute a job.
+#------------------------------------------------------------------------------
+def executeJob(jobID)
+
+	# Get the state we need
+	pathJobDir = Workspace.pathActiveJob(jobID);
+	pathJob    = pathJobDir + "/job.json";
+	pathStdout = pathJobDir + "/stdout.txt";
+	pathStderr = pathJobDir + "/stderr.txt";
+
+
+	# Load the job
+	theJob = Job.new(pathJob);
+
+
+
+	# Execute the command
+	`#{theJob.cmd_task} > "#{pathStdout}" 2> "#{pathStderr}"`;
 
 end
 

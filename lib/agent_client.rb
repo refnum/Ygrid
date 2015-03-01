@@ -1,10 +1,10 @@
 #!/usr/bin/ruby -w
 #==============================================================================
 #	NAME:
-#		agent.rb
+#		agent_client.rb
 #
 #	DESCRIPTION:
-#		ygrid agent.
+#		ygrid agent client.
 #
 #	COPYRIGHT:
 #		Copyright (c) 2015, refNum Software
@@ -43,60 +43,69 @@
 #==============================================================================
 # Imports
 #------------------------------------------------------------------------------
-require "xmlrpc/client";
-require "xmlrpc/server";
+require 'fileutils';
 
-require_relative 'agent_client';
-require_relative 'agent_server';
-require_relative 'daemon';
+require_relative 'job';
+require_relative 'syncer';
+require_relative 'utils';
+require_relative 'workspace';
 
 
 
 
 
 #==============================================================================
-# Module
+# Class
 #------------------------------------------------------------------------------
-module Agent
+class AgentClient
 
 # Config
-AGENT_PORT = 7947;
+QUEUE_POLL = 1.5;
 
 
 
 
 
 #============================================================================
-#		Agent.start : Start the agent.
+#		AgentClient::run : Run the client.
 #----------------------------------------------------------------------------
-def Agent.start
+def run
+
+	# Run the client
+	loop do
+		dispatchJobs(waitForJobs());
+	end
+
+end
+
+
+
+
+
+#============================================================================
+#		AgentClient::waitForJobs : Wait for some jobs.
+#----------------------------------------------------------------------------
+def waitForJobs
 
 	# Get the state we need
-	abort("Agent already running!") if (Daemon.running?("agent"));
+	thePath = File.dirname(Workspace.pathQueuedJob("x")) + "/*.job";
+	theJobs = [];
 
 
 
-	# Start the agent
-	Daemon.start("agent") do
-		startClient();
-		startServer();
+	# Wait for jobs
+	puts "Waiting for jobs...";
+	
+	loop do
+		Dir.glob(thePath).each do |theFile|
+			theJobs << Job.new(theFile);
+		end
+
+		break if (!theJobs.empty?);
+		sleep(QUEUE_POLL);
 	end
 
-end
-
-
-
-
-
-#============================================================================
-#		Agent.submitJob : Submit a job.
-#----------------------------------------------------------------------------
-def Agent.submitJob(theGrid, theJob)
-
-	# Submit the job
-	theID = callServer(Node.local_address, "submitJob", theGrid, theJob);
-
-	return(theID);
+	return(theJobs);
 
 end
 
@@ -105,59 +114,142 @@ end
 
 
 #============================================================================
-#		Agent.callServer : Call a server.
+#		AgentClient::dispatchJobs : Dispatch some jobs.
 #----------------------------------------------------------------------------
-def Agent.callServer(theAddress, theCmd, *theArgs)
+def dispatchJobs(theJobs)
 
-	# Call a server
-	begin
-		theServer = XMLRPC::Client.new(theAddress.to_s, nil, AGENT_PORT);
-		theResult = theServer.call("ygrid." + theCmd, *theArgs);
-
-	rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
-		puts "Agent unable to connect to #{theHost} for #{theCmd}";
-		theResult = nil;
-	end
-
-	return(theResult);
-
-end
+	# Get the state we need
+	numJobs   = Utils.getCount(theJobs, "job");
+	fullGrids = [];
 
 
 
-
-
-#============================================================================
-#		Agent.startClient : Start the client.
-#----------------------------------------------------------------------------
-def Agent.startClient
-
-	# Start the client
+	# Process the jobs
 	#
-	# The client is run in a thread within the daemon.
+	# Jobs that can't be dispatched will defer any other jobs on that grid.
+	#
+	# This ensures they remain in the queue and will be processed as FIFO
+	# when that grid becomes available.
+	puts "Dispatching #{numJobs}..."; 
+
+	theJobs.each do |theJob|
+
+		if (fullGrids.include?(theJob.grid))
+			puts "Unable to dispatch #{theJob.id} as grid #{theJob.grid} is full";
+			continue;
+		end
+		
+		
+		if (!dispatchJobToGrid(theJob))
+			fullGrids << theJob.grid;
+		end	
+
+	end
+
+end
+
+
+
+
+
+#============================================================================
+#		AgentClient::dispatchJobToGrid : Dispatch a job to its grid.
+#----------------------------------------------------------------------------
+def dispatchJobToGrid(theJob)
+
+	# Get the state we need
+	theNodes  = Cluster.nodes(theJob.grid);
+	didAccept = false;
+
+
+
+	# Dispatch the job
+	#
+	# Nodes are sorted by priority via Node.score.
+	puts "Attempting to dispatch job #{theJob.id} to #{theNodes.size} nodes";
+
+	theNodes.sort.each do |theNode|
+		didAccept = dispatchJobToNode(theNode, theJob);
+		break if didAccept;
+	end
+
+	return(didAccept);
+
+end
+
+
+
+
+
+#============================================================================
+#		AgentClient::dispatchJobToNode : Dispatch a job to a node.
+#----------------------------------------------------------------------------
+def dispatchJobToNode(theNode, theJob)
+
+	# Open the job
+	puts "Attempting to dispatch job #{theJob.id} to #{theNode.address}";
+	
+	didAccept = callServer(theNode.address, "openJob", theJob.id);
+
+	puts "#{theNode.address} #{didAccept ? 'accepted' : 'rejected'} job #{theJob.id}";
+
+
+
+	# Start the monitor
+	if (didAccept)
+		startMonitor(theNode, theJob);
+	end
+
+	return(didAccept);
+
+end
+
+
+
+
+
+#============================================================================
+#		AgentClient::startMonitor : Start a job monitor.
+#----------------------------------------------------------------------------
+def startMonitor(theNode, theJob)
+
+	# Get the state we need
+	pathQueued = Workspace.pathQueuedJob(theJob.id);
+	pathOpened = Workspace.pathOpenedJob(theJob.id);
+
+
+
+	# Send the job
+	theJob.host = theNode.address;
+
+	FileUtils.mkdir_p(pathOpened);
+	FileUtils.mv(pathQueued, "#{pathOpened}/job.json");
+
+	Syncer.sendJob(theNode, theJob.id);
+
+
+
+	# Execute the job
+	callServer(theNode.address, "executeJob", theJob.id);
+
+
+
+	# Retrieve the job
+	Syncer.fetchJob(theNode, theJob.id);
+
+
+
+	# Close the job
+	callServer(theNode.address, "closeJob", theJob.id);
+
+
+
+	# Start the monitoring thread
 	Thread.new do
-		theClient = AgentClient.new();
-		theClient.run();
+
+		puts "TODO: process the job!";
+
 	end
-
-end
-
-
-
-
-
-#============================================================================
-#		Agent.startServer : Start the server.
-#----------------------------------------------------------------------------
-def Agent.startServer
-
-	# Start the server
-	#
-	# The server takes the daemon's main runloop.
-	theServer = XMLRPC::Server.new(AGENT_PORT, Node.local_address.to_s);
-	theServer.add_handler(XMLRPC::iPIMethods("ygrid"), AgentServer.new)
-
-	theServer.serve();
 
 end
 
@@ -166,6 +258,6 @@ end
 
 
 #==============================================================================
-# Module
+# Class
 #------------------------------------------------------------------------------
 end

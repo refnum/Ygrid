@@ -158,8 +158,8 @@ end
 def dispatchJobToGrid(theJob)
 
 	# Get the state we need
-	theNodes  = Cluster.nodes(theJob.grid);
-	didAccept = false;
+	theNodes = Cluster.nodes(theJob.grid);
+	didOpen  = false;
 
 
 
@@ -169,11 +169,11 @@ def dispatchJobToGrid(theJob)
 	puts "Attempting to dispatch job #{theJob.id} to #{theNodes.size} nodes";
 
 	theNodes.sort.each do |theNode|
-		didAccept = dispatchJobToNode(theNode, theJob);
-		break if didAccept;
+		didOpen = dispatchJobToNode(theNode, theJob);
+		break if didOpen;
 	end
 
-	return(didAccept);
+	return(didOpen);
 
 end
 
@@ -189,18 +189,18 @@ def dispatchJobToNode(theNode, theJob)
 	# Open the job
 	puts "Attempting to dispatch job #{theJob.id} to #{theNode.address}";
 	
-	didAccept = Agent.callServer(theNode.address, "openJob", theJob.id);
+	didOpen = Agent.callServer(theNode.address, "openJob", theJob.id);
 
-	puts "#{theNode.address} #{didAccept ? 'accepted' : 'rejected'} job #{theJob.id}";
+	puts "#{theNode.address} #{didOpen ? 'accepted' : 'rejected'} job #{theJob.id}";
 
 
 
 	# Start the monitor
-	if (didAccept)
+	if (didOpen)
 		startMonitor(theNode, theJob);
 	end
 
-	return(didAccept);
+	return(didOpen);
 
 end
 

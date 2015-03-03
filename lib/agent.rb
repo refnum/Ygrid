@@ -107,9 +107,9 @@ end
 def Agent.submitJob(theGrid, theJob)
 
 	# Submit the job
-	theID = callServer(Node.local_address, "submitJob", theGrid, theJob);
+	jobID = callServer(Node.local_address, "submitJob", theGrid, theJob);
 
-	return(theID);
+	return(jobID);
 
 end
 

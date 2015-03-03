@@ -222,7 +222,6 @@ def Cluster.removeFromTag(theTag, theValue)
 	theValues.delete(theValue);
 
 	theValue = theValues.sort.uniq.join(",");
-	theValue = nil if (theValue.empty?)
 
 	setTag(theTag, theValue);
 
@@ -253,11 +252,11 @@ end
 #----------------------------------------------------------------------------
 def Cluster.setTag(theTag, theValue)
 
-	theCmd = (theValue == nil) ? "-delete #{theTag}" : "-set #{theTag}=\"#{theValue}\"";
+	theCmd = (theValue.empty?) ? "-delete #{theTag}" : "-set #{theTag}=\"#{theValue}\"";
 	theLog  = `serf tags #{theCmd}`.chomp;
 
 	if (theLog != "Successfully updated agent tags")
-		puts "ERROR - Unable to set #{theTag} to #{theValue}: #{theLog}";
+		puts "ERROR - Unable to set '#{theTag}' to '#{theValue}': #{theLog}";
 	end
 
 end

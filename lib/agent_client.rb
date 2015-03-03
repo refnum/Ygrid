@@ -223,7 +223,7 @@ def startMonitor(theNode, theJob)
 	theJob.host = theNode.address;
 
 	FileUtils.mkdir_p(pathOpened);
-	FileUtils.mv(pathQueued, "#{pathOpened}/job.json");
+	FileUtils.mv(pathQueued, pathOpened + "/" + Agent::JOB_FILE);
 
 	Syncer.sendJob(theNode, theJob.id);
 

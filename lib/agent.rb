@@ -63,6 +63,13 @@ module Agent
 PORT = 7947;
 
 
+# Jobs
+JOB_FILE     = "job.json";
+JOB_STDOUT   = "stdout.txt";
+JOB_STDERR   = "stderr.txt";
+JOB_PROGRESS = "progress.txt";
+
+
 
 
 

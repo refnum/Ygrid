@@ -127,12 +127,12 @@ end
 def closeJob(jobID)
 
 	# Get the state we need
-	pathJobDir = Workspace.pathActiveJob(jobID);
+	pathActive = Workspace.pathActiveJob(jobID);
 
 
 
 	# Close the job
-	FileUtils.rm_rf(pathJobDir);
+	FileUtils.rm_rf(pathActive);
 	
 	# TODO: increment free slots
 
@@ -148,10 +148,10 @@ end
 def executeJob(jobID)
 
 	# Get the state we need
-	pathJobDir = Workspace.pathActiveJob(jobID);
-	pathJob    = pathJobDir + "/job.json";
-	pathStdout = pathJobDir + "/stdout.txt";
-	pathStderr = pathJobDir + "/stderr.txt";
+	pathJob    = Workspace.pathActiveJob(jobID, Agent::JOB_FILE);
+	pathStdout = Workspace.pathActiveJob(jobID, Agent::JOB_STDOUT);
+	pathStderr = Workspace.pathActiveJob(jobID, Agent::JOB_STDERR);
+
 
 
 	# Load the job
@@ -183,6 +183,25 @@ def nextJobIndex
 	end
 
 	return(nextIndex);
+
+end
+
+
+
+
+
+#==============================================================================
+#		AgentServer::setJobProgress : Set the job's progress.
+#------------------------------------------------------------------------------
+def setJobProgress(jobID, theProgress)
+
+	# Update the progress
+	pathProgress = Workspace.pathActiveJob(jobID, Agent::JOB_PROGRESS);
+
+
+
+	# Set the progress
+	IO.write(pathProgress, theProgress);
 
 end
 

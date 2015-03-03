@@ -201,9 +201,12 @@ end
 #============================================================================
 #		Workspace.pathActiveJob : Get the path to an active job.
 #----------------------------------------------------------------------------
-def Workspace.pathActiveJob(jobID)
+def Workspace.pathActiveJob(jobID, theFile=nil)
 
-	return(Workspace.pathJobs("/active/#{jobID}"));
+	thePath = Workspace.pathJobs("/active/#{jobID}");
+	thePath = thePath + "/#{theFile}" if (theFile != nil);
+	
+	return(thePath);
 
 end
 

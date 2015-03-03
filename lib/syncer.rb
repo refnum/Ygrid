@@ -58,15 +58,18 @@ require_relative 'workspace';
 #------------------------------------------------------------------------------
 module Syncer
 
+# Network
+PORT = 7948;
+
+
 # Config
-SYNCER_VERBOSE = "--verbose";
-SYNCER_PORT    = 7948;
+CONFIG_VERBOSE = "--verbose";
 
 CONFIG_FILE = <<CONFIG_FILE
 log file  = TOKEN_PATH_LOG
 pid file  = TOKEN_PATH_PID
 
-port       = #{SYNCER_PORT}
+port       = #{Syncer::PORT}
 use chroot = no
 list       = no
 read only  = no
@@ -216,7 +219,7 @@ def Syncer.transferFiles(theNode, theFiles, theSrc, theDst)
 
 
 	# Transfer the files
-	`rsync -az --recursive #{SYNCER_VERBOSE} --files-from="#{tmpFile.path}" #{theSrc} #{theDst} >> "#{pathLog}" 2>&1`;
+	`rsync -az --recursive #{CONFIG_VERBOSE} --files-from="#{tmpFile.path}" #{theSrc} #{theDst} >> "#{pathLog}" 2>&1`;
 
 	tmpFile.unlink();
 
@@ -262,7 +265,7 @@ def Syncer.workspaceURL(theNode, thePath)
 	pathWorkspace = Workspace.path();
 	
 	thePath = thePath[pathWorkspace.size()..-1];
-	theURL  = "rsync://#{theNode.address}:#{SYNCER_PORT}/ygrid/#{thePath}";
+	theURL  = "rsync://#{theNode.address}:#{Syncer::PORT}/ygrid/#{thePath}";
 
 	return(theURL);
 

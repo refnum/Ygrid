@@ -59,8 +59,8 @@ require_relative 'daemon';
 #------------------------------------------------------------------------------
 module Agent
 
-# Config
-AGENT_PORT = 7947;
+# Network
+PORT = 7947;
 
 
 
@@ -111,7 +111,7 @@ def Agent.callServer(theAddress, theCmd, *theArgs)
 
 	# Call a server
 	begin
-		theServer = XMLRPC::Client.new(theAddress.to_s, nil, AGENT_PORT);
+		theServer = XMLRPC::Client.new(theAddress.to_s, nil, Agent::PORT);
 		theResult = theServer.call("ygrid." + theCmd, *theArgs);
 
 	rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
@@ -153,8 +153,8 @@ def Agent.startServer
 
 	# Start the server
 	#
-	# The server takes the daemon's main runloop.
-	theServer = XMLRPC::Server.new(AGENT_PORT, Node.local_address.to_s);
+	# The server uses the daemon's main runloop.
+	theServer = XMLRPC::Server.new(Agent::PORT, Node.local_address.to_s);
 	theServer.add_handler(XMLRPC::iPIMethods("ygrid"), AgentServer.new)
 
 	theServer.serve();

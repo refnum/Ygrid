@@ -59,15 +59,17 @@ require_relative 'workspace';
 #------------------------------------------------------------------------------
 module Cluster
 
-# Config
-CLUSTER_VERSION = 1;
+# Network
+VERSION = 1;
 
+
+# Config
 CONFIG_FILE = <<CONFIG_FILE
 {
     "discover" : "ygrid",
 
     "tags" : {
-	    "ver"   : "#{CLUSTER_VERSION}",
+	    "ver"   : "#{Cluster::VERSION}",
         "os"    : "TOKEN_NODE_OS",
         "cpu"   : "TOKEN_NODE_CPUS",
         "ghz"   : "TOKEN_NODE_SPEED",
@@ -281,7 +283,7 @@ def Cluster.getMembers
 	# Get the members
 	#
 	# Only alive members with a matching version can be talked to.
-	return(JSON.parse(`serf members -format=json -status alive -tag ver=#{CLUSTER_VERSION}`).fetch("members", {}));
+	return(JSON.parse(`serf members -format=json -status alive -tag ver=#{Cluster::VERSION}`).fetch("members", {}));
 
 end
 

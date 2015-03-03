@@ -45,7 +45,9 @@
 #------------------------------------------------------------------------------
 require 'json';
 
+require_relative 'agent';
 require_relative 'daemon';
+require_relative 'job_status';
 require_relative 'node';
 require_relative 'utils';
 require_relative 'workspace';
@@ -131,6 +133,26 @@ def Cluster.leaveGrids(theGrids)
 
 	# Leave the grids
 	removeFromTag("grids", theGrids.join(","));
+
+end
+
+
+
+
+
+#============================================================================
+#		Cluster.updateJobStatus : Update the job status.
+#----------------------------------------------------------------------------
+def Cluster.updateJobStatus(theStatuses)
+
+	# Update the status
+	theJobs = Array.new();
+
+	theStatuses.each do |theStatus|
+		theJobs << theStatus.to_s;
+	end
+
+	setTag("jobs", theJobs.join(","));
 
 end
 

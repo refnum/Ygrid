@@ -46,6 +46,7 @@
 require 'fileutils';
 require 'yaml/store';
 
+require_relative 'job_status';
 require_relative 'job';
 require_relative 'node';
 require_relative 'utils';
@@ -60,6 +61,10 @@ require_relative 'workspace';
 #------------------------------------------------------------------------------
 class AgentServer
 
+# Config
+FILE_STATE   = "state.yml";
+MONITOR_POLL = 5;
+
 
 
 
@@ -69,16 +74,10 @@ class AgentServer
 #------------------------------------------------------------------------------
 def initialize
 
-	# Create the state
-	@state = YAML::Store.new(Workspace.pathJobs("state.yml"), true);
+	# Initialise ourselves
+	@state = createState();
 
-	@state.transaction do
-		@state[:jobs] = Array.new();
-
-		if (!@state.root?(:index))
-			@state[:index] = 0;
-		end
-	end
+	startMonitor();
 
 end
 
@@ -127,18 +126,23 @@ def openJob(jobID)
 	#
 	# Agents can accept one job per CPU.
 	@state.transaction do
-
 		didOpen = (@state[:jobs].size < Node.local_cpus);
+
 		if (didOpen)
 			# Save the job
 			@state[:jobs] << jobID;
 
+
 			# Create the state
 			FileUtils.mkdir_p(pathActive);
-			setJobProgress(jobID, Agent::STATUS_OPENED);	
+			setJobStatus(jobID, JobStatus::ACTIVE);
 		end
-
 	end
+
+
+
+	# Update our state
+	updateJobStatus();
 
 	return(didOpen);
 
@@ -168,6 +172,11 @@ def closeJob(jobID)
 		FileUtils.rm_rf(pathActive);
 	end
 
+
+
+	# Update our state
+	updateJobStatus();
+
 	return(true);
 
 end
@@ -192,12 +201,55 @@ def executeJob(jobID)
 
 	# Execute the job
 	Thread.new do
-		setJobProgress(jobID, Agent::STATUS_ACTIVE);	
 		`#{theJob.cmd_task} > "#{pathStdout}" 2> "#{pathStderr}"`;
-		setJobProgress(jobID, Agent::STATUS_FINISHED);
+
+		setJobStatus(jobID, JobStatus::DONE);
+		updateJobStatus();
 	end
 
 	return(true);
+
+end
+
+
+
+
+
+#==============================================================================
+#		AgentServer::createState : Create the state.
+#------------------------------------------------------------------------------
+def createState
+
+	# Create the state
+	theState = YAML::Store.new(Workspace.pathJobs(FILE_STATE), true);
+
+	theState.transaction do
+		theState[:jobs] = Array.new();
+
+		if (!theState.root?(:index))
+			theState[:index] = 0;
+		end
+	end
+	
+	return(theState);
+
+end
+
+
+
+
+
+#==============================================================================
+#		AgentServer::startMonitor : Start the monitor.
+#------------------------------------------------------------------------------
+def startMonitor
+
+	Thread.new do
+		loop do
+			updateJobStatus();
+			sleep(MONITOR_POLL);
+		end
+	end
 
 end
 
@@ -229,14 +281,60 @@ end
 
 
 #==============================================================================
-#		AgentServer::setJobProgress : Set the job's progress.
+#		AgentServer::updateJobStatus : Update our job status.
 #------------------------------------------------------------------------------
-def setJobProgress(jobID, theProgress)
+def updateJobStatus
 
-	# Set the progress
-	pathProgress = Workspace.pathActiveJob(jobID, Agent::JOB_PROGRESS);
+	# Update the job status
+	#
+	# The status of jobs can be updated as a result of starting a job, executing
+	# a job, or the monitor thread.
+	#
+	# As these all run on separate threads we use our transaction as a simple
+	# lock to ensure only one thread updates the cluster at a time.
+	@state.transaction do
+		# Collect the status
+		theStatuses = [];
 
-	IO.write(pathProgress, theProgress);
+		@state[:jobs].each do |jobID|
+			theStatuses << getJobStatus(jobID);
+		end
+
+
+		# Update the cluster
+		Cluster.updateJobStatus(theStatuses);
+	end
+
+end
+
+
+
+
+
+#==============================================================================
+#		AgentServer::getJobStatus : Get a JobStatus.
+#------------------------------------------------------------------------------
+def getJobStatus(jobID)
+
+	pathStatus = Workspace.pathActiveJob(jobID, Agent::JOB_STATUS);
+	theStatus  = Utils.atomicRead(pathStatus);
+
+	return(JobStatus.new(jobID, theStatus, Node.local_address));
+
+end
+
+
+
+
+
+#==============================================================================
+#		AgentServer::setJobStatus : Set a job's status.
+#------------------------------------------------------------------------------
+def setJobStatus(jobID, theStatus)
+
+	pathStatus = Workspace.pathActiveJob(jobID, Agent::JOB_STATUS);
+
+	IO.write(pathStatus, theStatus);
 
 end
 

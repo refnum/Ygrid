@@ -263,6 +263,25 @@ end
 
 
 
+#============================================================================
+#		Utils.atomicRead : Read a file atomically.
+#----------------------------------------------------------------------------
+def Utils.atomicRead(theFile)
+
+	loop do
+		firstTime  = File.mtime(theFile)
+		theText    = IO.read(   theFile);
+		secondTime = File.mtime(theFile);
+		
+		return(theText) if (firstTime == secondTime);
+	end
+
+end
+
+
+
+
+
 #==============================================================================
 # Module
 #------------------------------------------------------------------------------

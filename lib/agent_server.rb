@@ -69,8 +69,17 @@ class AgentServer
 #------------------------------------------------------------------------------
 def initialize
 
-	@store = YAML::Store.new(Workspace.pathJobs("state.yml"), true);
-	
+	# Create the state
+	@state = YAML::Store.new(Workspace.pathJobs("state.yml"), true);
+
+	@state.transaction do
+		@state[:jobs] = Array.new();
+
+		if (!@state.root?(:index))
+			@state[:index] = 0;
+		end
+	end
+
 end
 
 
@@ -173,13 +182,14 @@ end
 #------------------------------------------------------------------------------
 def nextJobIndex
 
+	# Get the next index
 	nextIndex = nil;
 
-	@store.transaction do
-		nextIndex = @store.fetch(:index, 0) + 1;
+	@state.transaction do
+		nextIndex = @state[:index] + 1;
 		nextIndex = 1 if (nextIndex > 0xFFFFFFFF);
 
-		@store[:index] = nextIndex;
+		@state[:index] = nextIndex;
 	end
 
 	return(nextIndex);

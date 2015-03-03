@@ -117,12 +117,30 @@ end
 #------------------------------------------------------------------------------
 def openJob(jobID)
 
-	# TODO: check for free slots
+	# Get the state we need
 	pathActive = Workspace.pathActiveJob(jobID);
+	didOpen    = false;
 
-	FileUtils.mkdir_p(pathActive);
 
-	return(true);
+
+	# Open the job
+	#
+	# Agents can accept one job per CPU.
+	@state.transaction do
+
+		didOpen = (@state[:jobs].size < Node.local_cpus);
+		if (didOpen)
+			# Save the job
+			@state[:jobs] << jobID;
+
+			# Create the state
+			FileUtils.mkdir_p(pathActive);
+			setJobProgress(jobID, Agent::STATUS_OPENED);	
+		end
+
+	end
+
+	return(didOpen);
 
 end
 
@@ -141,9 +159,16 @@ def closeJob(jobID)
 
 
 	# Close the job
-	FileUtils.rm_rf(pathActive);
-	
-	# TODO: increment free slots
+	@state.transaction do
+		# Forget the job
+		@state[:jobs].delete(jobID);
+
+
+		# Clean up
+		FileUtils.rm_rf(pathActive);
+	end
+
+	return(true);
 
 end
 
@@ -205,12 +230,9 @@ end
 #------------------------------------------------------------------------------
 def setJobProgress(jobID, theProgress)
 
-	# Update the progress
+	# Set the progress
 	pathProgress = Workspace.pathActiveJob(jobID, Agent::JOB_PROGRESS);
 
-
-
-	# Set the progress
 	IO.write(pathProgress, theProgress);
 
 end

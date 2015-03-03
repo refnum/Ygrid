@@ -70,6 +70,12 @@ JOB_STDERR   = "stderr.txt";
 JOB_PROGRESS = "progress.txt";
 
 
+# Status
+STATUS_OPENED   = "opened";
+STATUS_ACTIVE   = "active";
+STATUS_FINISHED = "finished";
+
+
 
 
 

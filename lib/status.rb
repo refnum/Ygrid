@@ -45,6 +45,7 @@
 #------------------------------------------------------------------------------
 require 'json';
 
+require_relative 'job_status';
 require_relative 'node';
 require_relative 'utils';
 
@@ -112,7 +113,7 @@ def Status.nodeRow(theNode)
 	theColumns[:cpus] = theNode.cpus   + " x " + theNode.speed + "Ghz";
 	theColumns[:mem]  = theNode.memory + "GB";
 	theColumns[:load] = theNode.load;
-	theColumns[:jobs] = "-";
+	theColumns[:jobs] = theNode.jobs.size;
 
 
 
@@ -135,13 +136,49 @@ end
 
 
 #============================================================================
+#		Status.jobRow : Get a job table row.
+#----------------------------------------------------------------------------
+def Status.jobRow(theStatus)
+
+	# Build the columns
+	theColumns = Hash.new();
+
+	theColumns[:job]    = theStatus.id;
+	theColumns[:source] = theStatus.src_host;
+	theColumns[:worker] = theStatus.dst_host;
+	theColumns[:status] = theStatus.pretty_status;
+
+
+
+	# Get the row
+	theRow = "";
+
+	JOB_COLUMNS.each_pair do |theKey, theInfo|
+		theText  = theColumns[theKey].to_s;
+		theWidth = theInfo[:width];
+
+		theRow << theText.slice(0, theWidth-1).ljust(theWidth);
+	end
+
+	return(theRow);
+
+end
+
+
+
+
+
+#============================================================================
 #		Status.showStatus : Show the status.
 #----------------------------------------------------------------------------
 def Status.showStatus(theGrid, theNodes)
 
 	# Get the state we need
-	if (theGrid.empty?)
-		theGrid = "ygrid";
+	theGrid = "ygrid" if (theGrid.empty?)
+	theJobs = Array.new();
+
+	theNodes.each do |theNode|
+		theJobs.concat(theNode.jobs);
 	end
 
 
@@ -165,11 +202,17 @@ def Status.showStatus(theGrid, theNodes)
 
 
 	# Show the jobs
-	theHeader = headerColumns(JOB_COLUMNS);
-	Utils.putHeader(theHeader, "-");
+	if (!theJobs.empty?)
+		theHeader = headerColumns(JOB_COLUMNS);
+		Utils.putHeader(theHeader, "-");
+	
+		theJobs.each do |theStatus|
+			puts jobRow(theStatus);
+		end
 
-	puts "";
-	puts "";
+		puts "";
+		puts "";
+	end
 
 end
 

@@ -189,6 +189,26 @@ end
 
 
 #==============================================================================
+#		Node::jobs : Get the job statuses.
+#------------------------------------------------------------------------------
+def jobs
+
+	theJobs     = @tags.fetch("jobs", "").split(",");
+	theStatuses = Array.new()
+
+	theJobs.each do |theState|
+		theStatuses << JobStatus.from_s(theState, self.address);
+	end
+
+	return(theStatuses);
+
+end
+
+
+
+
+
+#==============================================================================
 #		Node::score : Get the scheduling score.
 #------------------------------------------------------------------------------
 def score

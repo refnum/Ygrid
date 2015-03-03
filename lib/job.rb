@@ -68,7 +68,6 @@ attr_accessor :src_host
 attr_accessor :src_index
 attr_accessor :cmd_task
 attr_accessor :cmd_done
-attr_accessor :status
 attr_accessor :inputs
 attr_accessor :outputs
 
@@ -80,7 +79,6 @@ DEFAULT_SRC_HOST  = nil;
 DEFAULT_SRC_INDEX = nil;
 DEFAULT_CMD_TASK  = "";
 DEFAULT_CMD_DONE  = "";
-DEFAULT_STATUS    = nil;
 DEFAULT_INPUTS    = [];
 DEFAULT_OUTPUTS   = [];
 
@@ -136,7 +134,6 @@ def load(thePath)
 	@src_index = theInfo.fetch("src_index",   DEFAULT_SRC_INDEX);
 	@cmd_task  = theInfo.fetch("cmd_task",    DEFAULT_CMD_TASK);
 	@cmd_done  = theInfo.fetch("cmd_done",    DEFAULT_CMD_DONE);
-	@status    = theInfo.fetch("status",      DEFAULT_STATUS);
 	@inputs    = theInfo.fetch("inputs",      DEFAULT_INPUTS);
 	@outputs   = theInfo.fetch("outputs",     DEFAULT_OUTPUTS);
 
@@ -161,7 +158,6 @@ def save(theFile)
 	theInfo["src_index"] = @src_index if (@src_index != DEFAULT_SRC_INDEX);
 	theInfo["cmd_task"]  = @cmd_task  if (@cmd_task  != DEFAULT_CMD_TASK);
 	theInfo["cmd_done"]  = @cmd_done  if (@cmd_done  != DEFAULT_CMD_DONE);
-	theInfo["status"]    = @status    if (@status    != DEFAULT_STATUS);
 	theInfo["inputs"]    = @inputs    if (@inputs    != DEFAULT_INPUTS);
 	theInfo["outputs"]   = @outputs   if (@outputs   != DEFAULT_OUTPUTS);
 

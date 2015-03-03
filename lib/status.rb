@@ -58,19 +58,19 @@ require_relative 'utils';
 module Status
 
 NODE_COLUMNS = {
-	:name => { "title" => "Node",    "width" => 25 },
-	:addr => { "title" => "Address", "width" => 18 },
-	:cpus => { "title" => "CPUs",    "width" => 15 },
-	:mem  => { "title" => "Memory",  "width" => 14 },
-	:load => { "title" => "Load",    "width" => 10 },
-	:jobs => { "title" => "Jobs",    "width" => 4  }
+	:name => { :title => "Node",      :width => 25 },
+	:addr => { :title => "Address",   :width => 18 },
+	:cpus => { :title => "CPUs",      :width => 15 },
+	:mem  => { :title => "Memory",    :width => 14 },
+	:load => { :title => "Load",      :width => 10 },
+	:jobs => { :title => "Jobs",      :width => 4  }
 };
 
 JOB_COLUMNS = {
-	:job    => { "title" => "Job",     "width" => 20 },
-	:source => { "title" => "Source",  "width" => 20 },
-	:worker => { "title" => "Worker",  "width" => 20 },
-	:status => { "title" => "Status",  "width" => 6  },
+	:job    => { :title => "Job",     :width => 20 },
+	:source => { :title => "Source",  :width => 20 },
+	:worker => { :title => "Worker",  :width => 20 },
+	:status => { :title => "Status",  :width => 8  },
 };
 
 

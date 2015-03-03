@@ -56,9 +56,11 @@ require 'socket';
 #------------------------------------------------------------------------------
 class Node
 
-	attr_reader :name;
-	attr_reader :address;
-	attr_reader :tags;
+
+# Attributes
+attr_reader :name;
+attr_reader :address;
+attr_reader :tags;
 
 
 
@@ -109,7 +111,7 @@ end
 
 
 #==============================================================================
-#		Node::pretty_name : Get the prettified name.
+#		Node::pretty_name : Get a readable hostname.
 #------------------------------------------------------------------------------
 def pretty_name
 

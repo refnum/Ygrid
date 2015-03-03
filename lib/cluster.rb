@@ -64,21 +64,17 @@ VERSION = 1;
 
 
 # Config
-CONFIG_FILE = <<CONFIG_FILE
-{
-    "discover" : "ygrid",
-
-    "tags" : {
-	    "ver"   : "#{Cluster::VERSION}",
-        "os"    : "TOKEN_NODE_OS",
-        "cpu"   : "TOKEN_NODE_CPUS",
-        "ghz"   : "TOKEN_NODE_SPEED",
-        "mem"   : "TOKEN_NODE_MEM",
-        "load"  : "TOKEN_NODE_LOAD",
-        "grids" : "TOKEN_GRIDS"
-    }
-}
-CONFIG_FILE
+CONFIG = {
+	"discover" => "ygrid",
+	"tags"     => {
+		"ver"  => Cluster::VERSION.to_s,
+		"os"   => Node.local_os,
+		"cpu"  => Node.local_cpus.to_s,
+		"ghz"  => Node.local_speed.to_s,
+		"mem"  => Node.local_memory.to_s,
+		"load" => Node.local_load.to_s
+	}
+};
 
 
 
@@ -93,20 +89,15 @@ def Cluster.start(theGrids)
 	pathConfig = Workspace.pathConfig("cluster");
 	pathLog    = Workspace.pathLog(   "cluster");
 
-	theConfig = CONFIG_FILE.dup;
-	theConfig.gsub!("TOKEN_NODE_OS",    Node.local_os);
-	theConfig.gsub!("TOKEN_NODE_CPUS",  Node.local_cpus.to_s);
-	theConfig.gsub!("TOKEN_NODE_SPEED", Node.local_speed.to_s);
-	theConfig.gsub!("TOKEN_NODE_MEM",   Node.local_memory.to_s);
-	theConfig.gsub!("TOKEN_NODE_LOAD",  Node.local_load.to_s);
-	theConfig.gsub!("TOKEN_GRIDS",      theGrids.join(","));
+	theConfig                  = CONFIG.dup();
+	theConfig["tags"]["grids"] = theGrids.join(",") if (!theGrids.empty?);
 
 	abort("Cluster already running!") if (Daemon.running?("cluster"));
 
 
 
 	# Start the server
-	IO.write(pathConfig, theConfig);
+	IO.write(pathConfig, JSON.pretty_generate(theConfig));
 
 	thePID = Process.spawn("serf agent -config-file=\"#{pathConfig}\"", [:out, :err]=>[pathLog, "w"])
 	Process.detach(thePID);

@@ -189,7 +189,7 @@ def dispatchJobToNode(theNode, theJob)
 	# Open the job
 	puts "Attempting to dispatch job #{theJob.id} to #{theNode.address}";
 	
-	didAccept = callServer(theNode.address, "openJob", theJob.id);
+	didAccept = Agent.callServer(theNode.address, "openJob", theJob.id);
 
 	puts "#{theNode.address} #{didAccept ? 'accepted' : 'rejected'} job #{theJob.id}";
 
@@ -230,7 +230,7 @@ def startMonitor(theNode, theJob)
 
 
 	# Execute the job
-	callServer(theNode.address, "executeJob", theJob.id);
+	Agent.callServer(theNode.address, "executeJob", theJob.id);
 
 
 
@@ -240,7 +240,7 @@ def startMonitor(theNode, theJob)
 
 
 	# Close the job
-	callServer(theNode.address, "closeJob", theJob.id);
+	Agent.callServer(theNode.address, "closeJob", theJob.id);
 
 
 

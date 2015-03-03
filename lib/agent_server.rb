@@ -186,15 +186,18 @@ def executeJob(jobID)
 	pathStdout = Workspace.pathActiveJob(jobID, Agent::JOB_STDOUT);
 	pathStderr = Workspace.pathActiveJob(jobID, Agent::JOB_STDERR);
 
-
-
-	# Load the job
 	theJob = Job.new(pathJob);
 
 
 
-	# Execute the command
-	`#{theJob.cmd_task} > "#{pathStdout}" 2> "#{pathStderr}"`;
+	# Execute the job
+	Thread.new do
+		setJobProgress(jobID, Agent::STATUS_ACTIVE);	
+		`#{theJob.cmd_task} > "#{pathStdout}" 2> "#{pathStderr}"`;
+		setJobProgress(jobID, Agent::STATUS_FINISHED);
+	end
+
+	return(true);
 
 end
 

@@ -69,7 +69,7 @@ class AgentServer
 #------------------------------------------------------------------------------
 def initialize
 
-	@store = YAML::Store.new(Workspace.pathJobs("state.yml"));
+	@store = YAML::Store.new(Workspace.pathJobs("state.yml"), true);
 	
 end
 

@@ -184,13 +184,44 @@ end
 #----------------------------------------------------------------------------
 def id
 
-	# Get the ID
+	return(Job.encodeID(@src_index, @src_host));
+
+end
+
+
+
+
+
+#============================================================================
+#		Job.encodeID : Encode an ID.
+#----------------------------------------------------------------------------
+def self.encodeID(theIndex, theAddress)
+
+	# Encode the ID
 	#
-	# A job ID is a unique 16-character identifier that contains the IP
-	# address of its source host and a host-specific index.
-	theID = "%08X%08X" % [@src_index, @src_host.to_i];
+	# A job ID is a unique 16-character identifier that contains a
+	# node-specific index and the IP address of the source node.
+	theID = "%08X%08X" % [theIndex, theAddress.to_i];
 
 	return(theID);
+
+end
+
+
+
+
+
+#============================================================================
+#		Job.decodeID : Decode an ID.
+#----------------------------------------------------------------------------
+def self.decodeID(jobID)
+
+	# Decode the ID
+	theIndex   = jobID.slice( 0, 8).hex;
+	theAddress = IPAddr.new(jobID.slice(-8, 8).hex, Socket::AF_INET);
+	theInfo    = { :src_index => theIndex, :src_host => theAddress };
+
+	return(theInfo);
 
 end
 

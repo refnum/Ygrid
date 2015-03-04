@@ -49,6 +49,7 @@ require "xmlrpc/server";
 require_relative 'agent_client';
 require_relative 'agent_server';
 require_relative 'daemon';
+require_relative 'system';
 
 
 
@@ -101,7 +102,7 @@ end
 def Agent.submitJob(theGrid, theJob)
 
 	# Submit the job
-	jobID = callServer(Node.local_address, "submitJob", theGrid, theJob);
+	jobID = callServer(System.address, "submitJob", theGrid, theJob);
 
 	return(jobID);
 
@@ -161,7 +162,7 @@ def Agent.startServer
 	# Start the server
 	#
 	# The server uses the daemon's main runloop.
-	theServer = XMLRPC::Server.new(Agent::PORT, Node.local_address.to_s);
+	theServer = XMLRPC::Server.new(Agent::PORT, System.address.to_s);
 	theServer.add_handler(XMLRPC::iPIMethods("ygrid"), AgentServer.new)
 
 	theServer.serve();

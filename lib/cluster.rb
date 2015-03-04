@@ -49,6 +49,7 @@ require_relative 'agent';
 require_relative 'daemon';
 require_relative 'job_status';
 require_relative 'node';
+require_relative 'system';
 require_relative 'utils';
 require_relative 'workspace';
 
@@ -70,11 +71,11 @@ CONFIG = {
 	"discover" => "ygrid",
 	"tags"     => {
 		"ver"  => Cluster::VERSION.to_s,
-		"os"   => Node.local_os,
-		"cpu"  => Node.local_cpus.to_s,
-		"ghz"  => Node.local_speed.to_s,
-		"mem"  => Node.local_memory.to_s,
-		"load" => Node.local_load.to_s
+		"os"   => System.os,
+		"cpu"  => System.cpus.to_s,
+		"ghz"  => System.speed.to_s,
+		"mem"  => System.memory.to_s,
+		"load" => System.load.to_s
 	}
 };
 

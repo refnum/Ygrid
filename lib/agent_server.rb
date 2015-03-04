@@ -48,7 +48,7 @@ require 'yaml/store';
 
 require_relative 'job_status';
 require_relative 'job';
-require_relative 'node';
+require_relative 'system';
 require_relative 'utils';
 require_relative 'workspace';
 
@@ -92,7 +92,7 @@ def submitJob(theGrid, theJob)
 
 	# Prepare the job
 	theJob.grid      = theGrid;
-	theJob.src_host  = Node.local_address;
+	theJob.src_host  = System.address;
 	theJob.src_index = nextJobIndex();
 
 	jobID = theJob.id;
@@ -126,7 +126,7 @@ def openJob(jobID)
 	#
 	# Agents can accept one job per CPU.
 	@state.transaction do
-		didOpen = (@state[:jobs].size < Node.local_cpus);
+		didOpen = (@state[:jobs].size < System.cpus);
 
 		if (didOpen)
 			# Save the job
@@ -319,7 +319,7 @@ def getJobStatus(jobID)
 	pathStatus = Workspace.pathActiveJob(jobID, Agent::JOB_STATUS);
 	theStatus  = Utils.atomicRead(pathStatus);
 
-	return(JobStatus.new(jobID, theStatus, Node.local_address));
+	return(JobStatus.new(jobID, theStatus, System.address));
 
 end
 

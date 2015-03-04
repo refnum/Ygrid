@@ -1,10 +1,10 @@
 #!/usr/bin/ruby -w
 #==============================================================================
 #	NAME:
-#		utils.rb
+#		system.rb
 #
 #	DESCRIPTION:
-#		Utility code.
+#		System support.
 #
 #	COPYRIGHT:
 #		Copyright (c) 2015, refNum Software
@@ -43,11 +43,9 @@
 #==============================================================================
 # Imports
 #------------------------------------------------------------------------------
-require 'fileutils';
-
-require 'optparse'
-
-require_relative 'system';
+require 'ipaddr';
+require 'rbconfig';
+require 'socket';
 
 
 
@@ -56,22 +54,30 @@ require_relative 'system';
 #==============================================================================
 # Module
 #------------------------------------------------------------------------------
-module Utils
+module System
 
 
 
 
 
 #============================================================================
-#		Utils.getCount : Get a count.
+#		System.os : Get the OS.
 #----------------------------------------------------------------------------
-def Utils.getCount(theArray, theSingular, thePlural=nil)
+def System.os
 
-	if (thePlural == nil)
-		thePlural = theSingular + "s";
+	case RbConfig::CONFIG['host_os']
+		when /darwin|mac os/
+			return("mac");
+		
+		when /linux/
+			return("linux");
+
+		when /mswin|msys|mingw|cygwin|bccwin|wince|emc/
+			return("windows");
+
+		else
+			raise("UNKNOWN PLATFORM");
 	end
-	
-	return(theArray.size.to_s + " " + (theArray.size == 1 ? theSingular : thePlural));
 
 end
 
@@ -80,77 +86,19 @@ end
 
 
 #============================================================================
-#		Utils.putHeader : Display a header.
+#		System.cpus : Get the CPU count.
 #----------------------------------------------------------------------------
-def Utils.putHeader(theHeader, theDivider)
+def System.cpus
 
-	puts theHeader;
-	puts theDivider * theHeader.size;
-
-end
-
-
-
-
-
-#============================================================================
-#		Utils.cmdInstalled? : Is a command installed?
-#----------------------------------------------------------------------------
-def Utils.cmdInstalled?(theCmd)
-
-	return(`which #{theCmd} | wc -c`.to_i != 0);
-
-end
-
-
-
-
-
-#============================================================================
-#		Utils.checkInstall : Check the installation.
-#----------------------------------------------------------------------------
-def Utils.checkInstall
-
-	# Get the state we need
-	haveRsync = cmdInstalled?("rsync");
-	haveSerf  = cmdInstalled?("serf");
-
-
-
-	# Show some help
 	case System.os
 		when "mac"
-			if (!haveSerf)
-				puts "Unable to locate serf. Install with Homebrew:";
-				puts "";
-				puts"   # http://brew.sh/";
-				puts "  brew install caskroom/cask/brew-cask";
-				puts "  brew cask install serf";
-				puts "";
-			end
-		
+			return(`sysctl -n hw.ncpu`.to_i);
 		
 		when "linux"
-			if (!haveRsync)
-				puts "Unable to locate rsync. Install with 'apt-get install rsync'";
-				puts "";
-			end
+			return(`cat /proc/cpuinfo | grep processor | wc -l`.to_i);
 
-			if (!haveSerf)
-				puts "Unable to locate serf. Install from https://www.serfdom.io/downloads.html";
-				puts "";
-			end
-		
-		
 		else
-			puts "UNKNOWN PLATFORM";
-	end
-
-
-
-	# Handle failure
-	if (!haveRsync || !haveSerf)
-		exit(-1);
+			raise("UNKNOWN PLATFORM");
 	end
 
 end
@@ -160,74 +108,23 @@ end
 
 
 #============================================================================
-#		Utils.getArguments : Get the arguments.
+#		System.speed : Get the CPU speed in Ghz.
 #----------------------------------------------------------------------------
-def Utils.getArguments
+def System.speed
 
-	# Extract the options
-	theArgs   = Hash.new("");
-	theParser = OptionParser.new do |opts|
-		opts.on("-r", "--root=path") do |thePath|
-			theArgs[:root] = thePath;
-		end
-
-		opts.on("-g", "--grid=grid1,grid2,gridN") do |theGrid|
-			theArgs[:grid] = theGrid;
-		end
-	end;
-
-	theParser.parse!;
-
-
-
-	# Extract the arguments
-	theArgs[:cmd] = "help";
-
-	if (!ARGV.empty?)
-		theArgs[:cmd]  = ARGV.shift;
-		theArgs[:args] = ARGV;
-	end
-
-
-
-	# Validate the arguments
-	case theArgs[:cmd]
-		when "start"
-			if (theArgs[:root].empty?)
-				theArgs[:root] = "/tmp/ygrid";
-			end
+	case System.os
+		when "mac"
+			return(`sysctl -n hw.cpufrequency`.to_f / 1000000000.0);
 		
-		when "join", "leave"
-			if (theArgs[:args].empty?)
-				theArgs[:cmd] = "help";
-			end
-	end
-	
-	return(theArgs);
+		when "linux"
+			maxSpeed = `cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq 2>/dev/null`.to_f;
+			return(maxSpeed / 1000000000.0) if (maxSpeed != 0.0);
 
-end
+			currSpeed = `cat /proc/cpuinfo | grep MHz | cut -f2 -d: | head -n 1`.to_f;
+			return(currSpeed / 1000.0);
 
-
-
-
-
-#============================================================================
-#		Utils.sleepLoop : Loop and sleep.
-#----------------------------------------------------------------------------
-def Utils.sleepLoop(theTime, &block)
-
-	# Loop until Ctrl-C
-	begin
-		loop do
-			block.call();
-			sleep(theTime);
-		end
-
-	rescue Interrupt
-		# Consume the stack crawl
-
-	rescue Exception => e
-		puts e
+		else
+			raise("UNKNOWN PLATFORM");
 	end
 
 end
@@ -237,44 +134,79 @@ end
 
 
 #============================================================================
-#		Utils.failIfError : Fail if errors are found.
+#		System.memory : Get the memory in Gb.
 #----------------------------------------------------------------------------
-def Utils.failIfError(theMsg, theErrors, &block)
+def System.memory
 
-	# Handle failure
-	if (!theErrors.empty?)
-		# Show the errors
-		puts theMsg;
-	
-		theErrors.each do |theError|
-			puts "  #{theError}";
-		end
-
-
-		# Cleanup and quit
-		yield if block_given?;
-
-		exit(-1);
-	end
-
-end
-
-
-
-
-
-#============================================================================
-#		Utils.atomicRead : Read a file atomically.
-#----------------------------------------------------------------------------
-def Utils.atomicRead(theFile)
-
-	loop do
-		firstTime  = File.mtime(theFile)
-		theText    = IO.read(   theFile);
-		secondTime = File.mtime(theFile);
+	case System.os
+		when "mac"
+			return(`sysctl -n hw.memsize`.to_i / 1073741824);
 		
-		return(theText) if (firstTime == secondTime);
+		when "linux"
+			return(`cat /proc/meminfo | grep MemTotal | cut -f2 -d:`.to_i / 1000000);
+
+		else
+			raise("UNKNOWN PLATFORM");
 	end
+
+end
+
+
+
+
+
+#============================================================================
+#		System.load : Get the system load.
+#----------------------------------------------------------------------------
+def System.load
+
+	numCPUs   = System.cpus.to_f;
+	loadTotal = numCPUs;
+
+	case System.os
+		when "mac"
+			loadTotal = `sysctl -n vm.loadavg | cut -f2 -d' '`.to_f;
+		
+		when "linux"
+			loadTotal = `cat /proc/loadavg | cut -f1 -d' '`.to_f;
+
+		else
+			raise("UNKNOWN PLATFORM");
+	end
+
+	return((loadTotal / numCPUs).round(2));
+
+end
+
+
+
+
+
+#============================================================================
+#		System.name : Get the system name.
+#----------------------------------------------------------------------------
+def System.name
+
+	return(Socket.gethostname());
+
+end
+
+
+
+
+
+#============================================================================
+#		System.address : Get the system IP address.
+#----------------------------------------------------------------------------
+def System.address
+
+	# Get the first IPv4 address
+	theList = Socket.ip_address_list;
+	theInfo = theList.detect{ |info|	info.ipv4?            and
+										!info.ipv4_loopback?  and
+										!info.ipv4_multicast? };
+
+	return(IPAddr.new(theInfo.ip_address));
 
 end
 
@@ -286,3 +218,5 @@ end
 # Module
 #------------------------------------------------------------------------------
 end
+
+

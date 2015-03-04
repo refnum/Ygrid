@@ -44,8 +44,8 @@
 # Imports
 #------------------------------------------------------------------------------
 require 'ipaddr';
-require 'rbconfig';
-require 'socket';
+
+require_relative 'system';
 
 
 
@@ -73,15 +73,15 @@ def initialize(theName=nil, theAddress=nil, theTags=nil)
 
 	# Local node
 	if (theName == nil)
-		@name    = Node.local_name;
-		@address = Node.local_address;
+		@name    = System.name;
+		@address = System.address;
 		@tags    = Hash.new();
 
-		@tags["os"]   = Node.local_os;
-		@tags["cpu"]  = Node.local_cpus;
-		@tags["ghz"]  = Node.local_speed;
-		@tags["mem"]  = Node.local_memory;
-		@tags["load"] = Node.local_load;
+		@tags["os"]   = System.os;
+		@tags["cpu"]  = System.cpus;
+		@tags["ghz"]  = System.speed;
+		@tags["mem"]  = System.memory;
+		@tags["load"] = System.load;
 
 
 	# Specified node
@@ -228,7 +228,7 @@ def score
 	theLoad  = ((load > 0.9) ? 1.0 : load);
 	theScore = ((cpus * speed) * (1.0 - theLoad)) + memory;
 
-	if (address == local_address())
+	if (address == System.address)
 		theScore = theScore + 9000;
 	end
 
@@ -247,160 +247,6 @@ def <=> (other)
 
 	# Compare by score
 	return(self.score <=> other.score);
-
-end
-
-
-
-
-
-#============================================================================
-#		Node.local_os : Get the local OS.
-#----------------------------------------------------------------------------
-def self.local_os
-
-	case RbConfig::CONFIG['host_os']
-		when /darwin|mac os/
-			return("mac");
-		
-		when /linux/
-			return("linux");
-
-		when /mswin|msys|mingw|cygwin|bccwin|wince|emc/
-			return("windows");
-
-		else
-			raise("UNKNOWN PLATFORM");
-	end
-
-end
-
-
-
-
-
-#============================================================================
-#		Node.local_cpus : Get the local CPU count.
-#----------------------------------------------------------------------------
-def self.local_cpus
-
-	case local_os()
-		when "mac"
-			return(`sysctl -n hw.ncpu`.to_i);
-		
-		when "linux"
-			return(`cat /proc/cpuinfo | grep processor | wc -l`.to_i);
-
-		else
-			raise("UNKNOWN PLATFORM");
-	end
-
-end
-
-
-
-
-
-#============================================================================
-#		Node.local_speed : Get the local CPU speed in Ghz.
-#----------------------------------------------------------------------------
-def self.local_speed
-
-	case local_os()
-		when "mac"
-			return(`sysctl -n hw.cpufrequency`.to_f / 1000000000.0);
-		
-		when "linux"
-			maxSpeed = `cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq 2>/dev/null`.to_f;
-			return(maxSpeed / 1000000000.0) if (maxSpeed != 0.0);
-
-			currSpeed = `cat /proc/cpuinfo | grep MHz | cut -f2 -d: | head -n 1`.to_f;
-			return(currSpeed / 1000.0);
-
-		else
-			raise("UNKNOWN PLATFORM");
-	end
-
-end
-
-
-
-
-
-#============================================================================
-#		Node.local_memory : Get the local memory in Gb.
-#----------------------------------------------------------------------------
-def self.local_memory
-
-	case local_os()
-		when "mac"
-			return(`sysctl -n hw.memsize`.to_i / 1073741824);
-		
-		when "linux"
-			return(`cat /proc/meminfo | grep MemTotal | cut -f2 -d:`.to_i / 1000000);
-
-		else
-			raise("UNKNOWN PLATFORM");
-	end
-
-end
-
-
-
-
-
-#============================================================================
-#		Node.local_load : Get the local load.
-#----------------------------------------------------------------------------
-def self.local_load
-
-	numCPUs   = local_cpus().to_f;
-	loadTotal = numCPUs;
-
-	case local_os()
-		when "mac"
-			loadTotal = `sysctl -n vm.loadavg | cut -f2 -d' '`.to_f;
-		
-		when "linux"
-			loadTotal = `cat /proc/loadavg | cut -f1 -d' '`.to_f;
-
-		else
-			raise("UNKNOWN PLATFORM");
-	end
-
-	return((loadTotal / numCPUs).round(2));
-
-end
-
-
-
-
-
-#============================================================================
-#		Node.local_name : Get the local name.
-#----------------------------------------------------------------------------
-def self.local_name
-
-	return(Socket.gethostname());
-
-end
-
-
-
-
-
-#============================================================================
-#		Node.local_address : Get the local IP address.
-#----------------------------------------------------------------------------
-def self.local_address
-
-	# Get the first IPv4 address
-	theList = Socket.ip_address_list;
-	theInfo = theList.detect{ |info|	info.ipv4?            and
-										!info.ipv4_loopback?  and
-										!info.ipv4_multicast? };
-
-	return(IPAddr.new(theInfo.ip_address));
 
 end
 

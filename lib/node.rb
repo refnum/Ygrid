@@ -268,9 +268,10 @@ def self.local_os
 
 		when /mswin|msys|mingw|cygwin|bccwin|wince|emc/
 			return("windows");
-	end
 
-	raise("UNKNOWN OS");
+		else
+			raise("UNKNOWN PLATFORM");
+	end
 
 end
 
@@ -284,11 +285,15 @@ end
 def self.local_cpus
 
 	case local_os()
-		when "mac", "linux"
+		when "mac"
 			return(`sysctl -n hw.ncpu`.to_i);
-	end
+		
+		when "linux"
+			return(`cat /proc/cpuinfo | grep processor | wc -l`.to_i);
 
-	raise("UNKNOWN OS");
+		else
+			raise("UNKNOWN PLATFORM");
+	end
 
 end
 
@@ -302,11 +307,19 @@ end
 def self.local_speed
 
 	case local_os()
-		when "mac", "linux"
-			return(`sysctl -n hw.cpufrequency`.chomp.to_f / 1000000000.0);
-	end
+		when "mac"
+			return(`sysctl -n hw.cpufrequency`.to_f / 1000000000.0);
+		
+		when "linux"
+			maxSpeed = `cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq 2>/dev/null`.to_f;
+			return(maxSpeed / 1000000000.0) if (maxSpeed != 0.0);
 
-	raise("UNKNOWN PLATFORM");
+			currSpeed = `cat /proc/cpuinfo | grep MHz | cut -f2 -d: | head -n 1`.to_f;
+			return(currSpeed / 1000.0);
+
+		else
+			raise("UNKNOWN PLATFORM");
+	end
 
 end
 
@@ -320,11 +333,15 @@ end
 def self.local_memory
 
 	case local_os()
-		when "mac", "linux"
-			return(`sysctl -n hw.memsize`.chomp.to_i / 1073741824);
-	end
+		when "mac"
+			return(`sysctl -n hw.memsize`.to_i / 1073741824);
+		
+		when "linux"
+			return(`cat /proc/meminfo | grep MemTotal | cut -f2 -d:`.to_i / 1000000);
 
-	raise("UNKNOWN PLATFORM");
+		else
+			raise("UNKNOWN PLATFORM");
+	end
 
 end
 
@@ -337,15 +354,21 @@ end
 #----------------------------------------------------------------------------
 def self.local_load
 
-	case local_os()
-		when "mac", "linux"
-			loadTotal = `sysctl -n vm.loadavg | cut -f 2 -d ' '`.chomp.to_f;
-			numCPUs   = local_cpus().to_f;
+	numCPUs   = local_cpus().to_f;
+	loadTotal = numCPUs;
 
-			return((loadTotal / numCPUs).round(2));
+	case local_os()
+		when "mac"
+			loadTotal = `sysctl -n vm.loadavg | cut -f2 -d' '`.to_f;
+		
+		when "linux"
+			loadTotal = `cat /proc/loadavg | cut -f1 -d' '`.to_f;
+
+		else
+			raise("UNKNOWN PLATFORM");
 	end
 
-	raise("UNKNOWN PLATFORM");
+	return((loadTotal / numCPUs).round(2));
 
 end
 

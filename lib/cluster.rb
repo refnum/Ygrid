@@ -142,14 +142,14 @@ end
 
 
 #============================================================================
-#		Cluster.updateJobStatus : Update the job status.
+#		Cluster.updateJobsStatus : Update the jobs status.
 #----------------------------------------------------------------------------
-def Cluster.updateJobStatus(theStatuses)
+def Cluster.updateJobsStatus(jobsStatus)
 
 	# Update the status
 	theJobs = Array.new();
 
-	theStatuses.each do |theStatus|
+	jobsStatus.each do |theStatus|
 		theJobs << theStatus.to_s;
 	end
 

@@ -142,7 +142,7 @@ def openJob(jobID)
 
 
 	# Update our state
-	updateJobStatus();
+	updateJobsStatus();
 
 	return(didOpen);
 
@@ -175,7 +175,7 @@ def closeJob(jobID)
 
 
 	# Update our state
-	updateJobStatus();
+	updateJobsStatus();
 
 	return(true);
 
@@ -204,7 +204,7 @@ def executeJob(jobID)
 		`#{theJob.cmd_task} > "#{pathStdout}" 2> "#{pathStderr}"`;
 
 		setJobStatus(jobID, JobStatus::DONE);
-		updateJobStatus();
+		updateJobsStatus();
 	end
 
 	return(true);
@@ -246,7 +246,7 @@ def startMonitor
 
 	Thread.new do
 		loop do
-			updateJobStatus();
+			updateJobsStatus();
 			sleep(MONITOR_POLL);
 		end
 	end
@@ -281,11 +281,11 @@ end
 
 
 #==============================================================================
-#		AgentServer::updateJobStatus : Update our job status.
+#		AgentServer::updateJobsStatus : Update the jobs status.
 #------------------------------------------------------------------------------
-def updateJobStatus
+def updateJobsStatus
 
-	# Update the job status
+	# Update the jobs status
 	#
 	# The status of jobs can be updated as a result of starting a job, executing
 	# a job, or the monitor thread.
@@ -294,15 +294,15 @@ def updateJobStatus
 	# lock to ensure only one thread updates the cluster at a time.
 	@state.transaction do
 		# Collect the status
-		theStatuses = [];
+		jobsStatus = [];
 
 		@state[:jobs].each do |jobID|
-			theStatuses << getJobStatus(jobID);
+			jobsStatus << getJobStatus(jobID);
 		end
 
 
 		# Update the cluster
-		Cluster.updateJobStatus(theStatuses);
+		Cluster.updateJobsStatus(jobsStatus);
 	end
 
 end

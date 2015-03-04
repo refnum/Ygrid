@@ -189,18 +189,18 @@ end
 
 
 #==============================================================================
-#		Node::jobs : Get the job statuses.
+#		Node::jobs : Get the jobs status.
 #------------------------------------------------------------------------------
 def jobs
 
 	theJobs     = @tags.fetch("jobs", "").split(",");
-	theStatuses = Array.new()
+	jobsStatus = Array.new()
 
 	theJobs.each do |theState|
-		theStatuses << JobStatus.from_s(theState, self.address);
+		jobsStatus << JobStatus.from_s(theState, self.address);
 	end
 
-	return(theStatuses);
+	return(jobsStatus);
 
 end
 

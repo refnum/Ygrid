@@ -195,9 +195,9 @@ def dispatchJobToNode(theNode, theJob)
 
 
 
-	# Start the monitor
+	# Execute the job
 	if (didOpen)
-		startMonitor(theNode, theJob);
+		executeJob(theNode, theJob);
 	end
 
 	return(didOpen);
@@ -209,9 +209,9 @@ end
 
 
 #============================================================================
-#		AgentClient::startMonitor : Start a job monitor.
+#		AgentClient::executeJob : Execute the job.
 #----------------------------------------------------------------------------
-def startMonitor(theNode, theJob)
+def executeJob(theNode, theJob)
 
 	# Get the state we need
 	pathQueued = Workspace.pathQueuedJob(theJob.id);
@@ -230,25 +230,67 @@ def startMonitor(theNode, theJob)
 
 
 	# Execute the job
+	#
+	# The remote node will update the status of the job as it executes, which will
+	# trigger a cluster update for that node.
+	#
+	# Once the job is marked as finished by the remote node then finishJob will be
+	# invoked by the cluster event handler to fetch the results and close the job.
 	Agent.callServer(theNode, "executeJob", theJob.id);
 
-
-
-	# Retrieve the job
-	Syncer.fetchJob(theNode, theJob.id);
+end
 
 
 
-	# Close the job
-	Agent.callServer(theNode, "closeJob", theJob.id);
+
+
+#============================================================================
+#		AgentClient.finishJob : A job has finished.
+#----------------------------------------------------------------------------
+def self.finishJob(theNode, jobID)
+	
+	# Record the job
+	isKnown = false;
+
+	Workspace.stateCompletedJobs do |theState|
+		isKnown         = theState.root?(jobID);
+		theState[jobID] = true;
+	end
 
 
 
-	# Start the monitoring thread
-	Thread.new do
+	# Finish the job
+	#
+	# Any cluster update will invoke us for any finished job on the node.
+	#
+	# Since there may be multiple cluster updates before the job has been removed
+	# from the remote node we track the known finished jobs in our state and only
+	# process them the first time we see them.
+	#
+	# Since it may take some time between us closing the job on the remote node and
+	# the corresponding cluster upate we may continue to see update for that job even
+	# after we've closed it so we leave closed jobs in our state to avoid processing
+	# them again.
+	#
+	# Since cluster event handlers must return quickly, but syncing the output files
+	# may take some time, we fork a daemon to do the cleanup work.
+	if (!isKnown)
+		Daemon.start("agent") do
 
-		puts "TODO: process the job!";
+			# Finish the job
+			pathOpened = Workspace.pathOpenedJob(jobID);
 
+			Syncer.fetchJob( theNode,             jobID);
+			Agent.callServer(theNode, "closeJob", jobID);
+
+			FileUtils.rm_rf(pathOpened);
+
+
+
+			# Execute the done hook
+			puts "TODO: invoke cmd_done hook"
+			
+		end
 	end
 
 end

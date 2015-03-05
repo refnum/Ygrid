@@ -43,6 +43,7 @@
 #==============================================================================
 # Imports
 #------------------------------------------------------------------------------
+require_relative 'agent';
 require_relative 'job_status';
 require_relative 'node';
 
@@ -77,13 +78,14 @@ def memberUpdate(theNodes)
 
 	# Process the nodes
 	theNodes.each do |theNode|
-
 		theNode.jobs.each do |theStatus|
+
+			# Finish completed jobs
 			if (theStatus.status == JobStatus::DONE)
-
+				AgentClient.finishJob(theNode, theStatus.id);
 			end
-		end
 
+		end
 	end
 	
 end

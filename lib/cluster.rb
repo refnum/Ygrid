@@ -153,7 +153,7 @@ def Cluster.updateJobsStatus(jobsStatus)
 		theJobs << theStatus.to_s;
 	end
 
-	setTag("jobs", theJobs.join(","));
+	setTag("jobs", theJobs.join(";"));
 
 end
 

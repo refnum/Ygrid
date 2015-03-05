@@ -102,7 +102,7 @@ end
 #------------------------------------------------------------------------------
 def to_s
 
-	return("{ name: \"#{@name}\", address: \"#{@address}\", tags: #{@tags} }");
+	return("{ name: \"#{@name}\", address: \"#{@address}\", tags: \"#{@tags}\" }");
 
 end
 
@@ -189,11 +189,11 @@ end
 
 
 #==============================================================================
-#		Node::jobs : Get the jobs status.
+#		Node::jobs : Get the jobs executing on the node.
 #------------------------------------------------------------------------------
 def jobs
 
-	theJobs     = @tags.fetch("jobs", "").split(",");
+	theJobs     = @tags.fetch("jobs", "").split(";");
 	jobsStatus = Array.new()
 
 	theJobs.each do |theState|

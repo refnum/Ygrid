@@ -124,7 +124,7 @@ end
 #============================================================================
 #		Daemon.start : Start a daemon to run a block.
 #----------------------------------------------------------------------------
-def Daemon.start(theCmd, &block)
+def Daemon.start(theCmd, &theBlock)
 
 	# Get the state we need
 	pathLog = Workspace.pathLog(theCmd);
@@ -165,7 +165,7 @@ def Daemon.start(theCmd, &block)
 
 	# Execute the daemon
 	begin
-		block.call();
+		theBlock.call();
 	ensure
 		Daemon.stopped(theCmd);
 	end

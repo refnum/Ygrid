@@ -214,12 +214,12 @@ end
 #============================================================================
 #		Utils.sleepLoop : Loop and sleep.
 #----------------------------------------------------------------------------
-def Utils.sleepLoop(theTime, &block)
+def Utils.sleepLoop(theTime, &theBlock)
 
 	# Loop until Ctrl-C
 	begin
 		loop do
-			block.call();
+			theBlock.call();
 			sleep(theTime);
 		end
 
@@ -239,7 +239,7 @@ end
 #============================================================================
 #		Utils.failIfError : Fail if errors are found.
 #----------------------------------------------------------------------------
-def Utils.failIfError(theMsg, theErrors, &block)
+def Utils.failIfError(theMsg, theErrors, &theBlock)
 
 	# Handle failure
 	if (!theErrors.empty?)

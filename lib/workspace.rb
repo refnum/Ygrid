@@ -177,7 +177,7 @@ end
 #----------------------------------------------------------------------------
 def Workspace.pathQueuedJob(jobID)
 
-	return(Workspace.pathJobs("/queued/#{jobID}.job"));
+	return(Workspace.pathJobs("queued/#{jobID}.job"));
 
 end
 
@@ -190,7 +190,7 @@ end
 #----------------------------------------------------------------------------
 def Workspace.pathOpenedJob(jobID)
 
-	return(Workspace.pathJobs("/opened/#{jobID}"));
+	return(Workspace.pathJobs("opened/#{jobID}"));
 
 end
 
@@ -203,7 +203,7 @@ end
 #----------------------------------------------------------------------------
 def Workspace.pathActiveJob(jobID, theFile=nil)
 
-	thePath = Workspace.pathJobs("/active/#{jobID}");
+	thePath = Workspace.pathJobs("active/#{jobID}");
 	thePath = thePath + "/#{theFile}" if (theFile != nil);
 	
 	return(thePath);
@@ -219,7 +219,7 @@ end
 #----------------------------------------------------------------------------
 def Workspace.pathCompletedJob(jobID)
 
-	return(Workspace.pathJobs("/completed/#{jobID}"));
+	return(Workspace.pathJobs("completed/#{jobID}"));
 
 end
 

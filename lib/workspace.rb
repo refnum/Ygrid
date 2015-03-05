@@ -44,6 +44,7 @@
 # Imports
 #------------------------------------------------------------------------------
 require 'fileutils';
+require 'yaml/store';
 
 
 
@@ -284,14 +285,27 @@ end
 
 
 #============================================================================
+#		Workspace.state : Get a PStore.
+#----------------------------------------------------------------------------
+def Workspace.state(thePath, theBlock)
+
+	theState = YAML::Store.new(thePath, true);
+	theState.transaction do
+		theBlock.call(theState);
+	end
+	
+end
+
+
+
+
+
+#============================================================================
 #		Workspace.stateJobs : Get the PStore for persistent job state.
 #----------------------------------------------------------------------------
 def Workspace.stateJobs(&theBlock)
 
-	theState = YAML::Store.new(Workspace.pathJobs("state.yml"), true);
-	theState.transaction do
-		theBlock.call(theState);
-	end
+	return(Workspace.state(Workspace.pathJobs("state.yml"), theBlock));
 
 end
 
@@ -304,10 +318,7 @@ end
 #----------------------------------------------------------------------------
 def Workspace.stateActiveJobs(&theBlock)
 
-	theState = YAML::Store.new(Workspace.pathJobs("active/state.yml"), true);
-	theState.transaction do
-		theBlock.call(theState);
-	end
+	return(Workspace.state(Workspace.pathJobs("active/state.yml"), theBlock));
 
 end
 
@@ -320,10 +331,7 @@ end
 #----------------------------------------------------------------------------
 def Workspace.stateCompletedJobs(&theBlock)
 
-	theState = YAML::Store.new(Workspace.pathJobs("completed/state.yml"), true);
-	theState.transaction do
-		theBlock.call(theState);
-	end
+	return(Workspace.state(Workspace.pathJobs("completed/state.yml"), theBlock));
 
 end
 

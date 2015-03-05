@@ -44,7 +44,6 @@
 # Imports
 #------------------------------------------------------------------------------
 require 'fileutils';
-require 'yaml/store';
 
 require_relative 'job_status';
 require_relative 'job';

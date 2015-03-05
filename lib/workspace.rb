@@ -114,8 +114,12 @@ def Workspace.cleanup
 
 	# Clean up jobs
 	#
-	# All jobs are obsolete when the server shuts down. Our index counter must
-	# persist so that any currently distributed jobs will be ignored as stale
+	# All jobs are obsolete when the server shuts down.
+	#
+	# The stateJobs() state is the only state that is allowed to persist between
+	# sessions.
+	#
+	# This ensures that any currently distributed jobs will be ignored as stale
 	# if the server is restarted before they are returned.
 	FileUtils.rm_rf(Workspace.path("jobs/queued"));
 	FileUtils.rm_rf(Workspace.path("jobs/opened"));
@@ -272,6 +276,54 @@ end
 def Workspace.pathHost(theHost)
 
 	return(Workspace.path("hosts/#{theHost}"));
+
+end
+
+
+
+
+
+#============================================================================
+#		Workspace.stateJobs : Get the PStore for persistent job state.
+#----------------------------------------------------------------------------
+def Workspace.stateJobs(&theBlock)
+
+	theState = YAML::Store.new(Workspace.pathJobs("state.yml"), true);
+	theState.transaction do
+		theBlock.call(theState);
+	end
+
+end
+
+
+
+
+
+#============================================================================
+#		Workspace.stateActiveJobs : Get the PStore for active jobs.
+#----------------------------------------------------------------------------
+def Workspace.stateActiveJobs(&theBlock)
+
+	theState = YAML::Store.new(Workspace.pathJobs("active/state.yml"), true);
+	theState.transaction do
+		theBlock.call(theState);
+	end
+
+end
+
+
+
+
+
+#============================================================================
+#		Workspace.stateCompletedJobs : Get the PStore for completed jobs.
+#----------------------------------------------------------------------------
+def Workspace.stateCompletedJobs(&theBlock)
+
+	theState = YAML::Store.new(Workspace.pathJobs("completed/state.yml"), true);
+	theState.transaction do
+		theBlock.call(theState);
+	end
 
 end
 

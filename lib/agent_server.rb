@@ -62,7 +62,6 @@ require_relative 'workspace';
 class AgentServer
 
 # Config
-FILE_STATE   = "state.yml";
 MONITOR_POLL = 5;
 
 
@@ -75,7 +74,10 @@ MONITOR_POLL = 5;
 def initialize
 
 	# Initialise ourselves
-	@state = createState();
+	Workspace.stateActiveJobs do |theState|
+		theState[:jobs] = Array.new();
+	end
+
 
 	startMonitor();
 
@@ -125,12 +127,12 @@ def openJob(jobID)
 	# Open the job
 	#
 	# Agents can accept one job per CPU.
-	@state.transaction do
-		didOpen = (@state[:jobs].size < System.cpus);
+	Workspace.stateActiveJobs do |theState|
+		didOpen = (theState[:jobs].size < System.cpus);
 
 		if (didOpen)
 			# Save the job
-			@state[:jobs] << jobID;
+			theState[:jobs] << jobID;
 
 
 			# Create the state
@@ -163,9 +165,9 @@ def closeJob(jobID)
 
 
 	# Close the job
-	@state.transaction do
+	Workspace.stateActiveJobs do |theState|
 		# Forget the job
-		@state[:jobs].delete(jobID);
+		theState[:jobs].delete(jobID);
 
 
 		# Clean up
@@ -216,30 +218,6 @@ end
 
 
 #==============================================================================
-#		AgentServer::createState : Create the state.
-#------------------------------------------------------------------------------
-def createState
-
-	# Create the state
-	theState = YAML::Store.new(Workspace.pathJobs(FILE_STATE), true);
-
-	theState.transaction do
-		theState[:jobs] = Array.new();
-
-		if (!theState.root?(:index))
-			theState[:index] = 0;
-		end
-	end
-	
-	return(theState);
-
-end
-
-
-
-
-
-#==============================================================================
 #		AgentServer::startMonitor : Start the monitor.
 #------------------------------------------------------------------------------
 def startMonitor
@@ -265,11 +243,11 @@ def nextJobIndex
 	# Get the next index
 	nextIndex = nil;
 
-	@state.transaction do
-		nextIndex = @state[:index] + 1;
+	Workspace.stateJobs do |theState|
+		nextIndex = theState.fetch(:index, 0) + 1;
 		nextIndex = 1 if (nextIndex > 0xFFFFFFFF);
 
-		@state[:index] = nextIndex;
+		theState[:index] = nextIndex;
 	end
 
 	return(nextIndex);
@@ -292,11 +270,11 @@ def updateJobsStatus
 	#
 	# As these all run on separate threads we use our transaction as a simple
 	# lock to ensure only one thread updates the cluster at a time.
-	@state.transaction do
+	Workspace.stateActiveJobs do |theState|
 		# Collect the status
 		jobsStatus = [];
 
-		@state[:jobs].each do |jobID|
+		theState[:jobs].each do |jobID|
 			jobsStatus << getJobStatus(jobID);
 		end
 

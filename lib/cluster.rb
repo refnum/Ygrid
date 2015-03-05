@@ -67,8 +67,13 @@ VERSION = 1;
 
 
 # Config
+HANDLER = File.dirname(__FILE__) + "/cluster_event.rb";
+
 CONFIG = {
-	"discover" => "ygrid",
+	"discover"       => "ygrid",
+	"log_level"      => "debug",
+	"event_handlers" => ["member-join,member-leave,member-update=#{Cluster::HANDLER}"],
+
 	"tags"     => {
 		"ver"  => Cluster::VERSION.to_s,
 		"os"   => System.os,
@@ -101,6 +106,7 @@ def Cluster.start(theGrids)
 
 	# Start the server
 	IO.write(pathConfig, JSON.pretty_generate(theConfig));
+	FileUtils.chmod(0755, Cluster::HANDLER);
 
 	thePID = Process.spawn("serf agent -config-file=\"#{pathConfig}\"", [:out, :err]=>[pathLog, "w"])
 	Process.detach(thePID);

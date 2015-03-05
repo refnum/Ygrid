@@ -189,7 +189,7 @@ def self.from_s(theState, dstHost)
 
 	# Create the status
 	theID     = Job.encodeID(srcIndex, srcHost);
-	theStatus = JobStatus.new(theID, theValues[3], dstHost);
+	theStatus = JobStatus.new(theID, theValues[2], dstHost);
 
 	return(theStatus);
 

@@ -281,6 +281,14 @@ end
 #----------------------------------------------------------------------------
 def Cluster.setTag(theTag, theValue)
 
+	# Check for duplicates
+	#
+	# Serf invokes our event handler even if nothing has changed so we check
+	# the existing value before issuing an update.
+	return if (theValue == getTag(theTag))
+
+
+	# Set the tag
 	theCmd = (theValue.empty?) ? "-delete #{theTag}" : "-set #{theTag}=\"#{theValue}\"";
 	theLog  = `serf tags #{theCmd}`.chomp;
 

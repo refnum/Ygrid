@@ -70,6 +70,9 @@ attr_accessor :cmd_task
 attr_accessor :cmd_done
 attr_accessor :files_input
 attr_accessor :files_output
+attr_accessor :weight_local
+attr_accessor :weight_cpu
+attr_accessor :weight_mem
 
 
 # Defaults
@@ -81,6 +84,9 @@ DEFAULT_CMD_TASK		= "";
 DEFAULT_CMD_DONE		= "";
 DEFAULT_FILES_INPUT		= [];
 DEFAULT_FILES_OUTPUT	= [];
+DEFAULT_WEIGHT_LOCAL	= 10.0;
+DEFAULT_WEIGHT_CPU		= 1.0;
+DEFAULT_WEIGHT_MEM		= 1.0;
 
 
 
@@ -136,6 +142,9 @@ def load(thePath)
 	@cmd_done		= theInfo.fetch("cmd_done",			DEFAULT_CMD_DONE);
 	@files_input	= theInfo.fetch("files_input",		DEFAULT_FILES_INPUT);
 	@files_output	= theInfo.fetch("files_output",		DEFAULT_FILES_OUTPUT);
+	@weight_local	= theInfo.fetch("weight_local",		DEFAULT_WEIGHT_LOCAL);
+	@weight_cpu		= theInfo.fetch("weight_cpu",		DEFAULT_WEIGHT_CPU);
+	@weight_mem		= theInfo.fetch("weight_mem",		DEFAULT_WEIGHT_MEM);
 
 
 
@@ -166,6 +175,9 @@ def save(theFile)
 	theInfo["cmd_done"]			= @cmd_done			if (@cmd_done		!= DEFAULT_CMD_DONE);
 	theInfo["files_input"]		= @files_input		if (@files_input	!= DEFAULT_FILES_INPUT);
 	theInfo["files_output"]		= @files_output		if (@files_output	!= DEFAULT_FILES_OUTPUT);
+	theInfo["weight_local"]		= @weight_local		if (@weight_local	!= DEFAULT_WEIGHT_LOCAL);
+	theInfo["weight_cpu"]		= @weight_cpu		if (@weight_cpu		!= DEFAULT_WEIGHT_CPU);
+	theInfo["weight_mem"]		= @weight_mem		if (@weight_mem		!= DEFAULT_WEIGHT_MEM);
 
 
 

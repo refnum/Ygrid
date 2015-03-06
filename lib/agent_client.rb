@@ -158,17 +158,15 @@ end
 def dispatchJobToGrid(theJob)
 
 	# Get the state we need
-	theNodes = Cluster.nodes(theJob.grid);
+	theNodes = nodesForJob(theJob)
 	didOpen  = false;
 
 
 
 	# Dispatch the job
-	#
-	# Nodes are sorted by priority via Node.score.
 	puts "Attempting to dispatch job #{theJob.id} to #{theNodes.size} nodes";
 
-	theNodes.sort.each do |theNode|
+	theNodes.each do |theNode|
 		didOpen = dispatchJobToNode(theNode, theJob);
 		break if didOpen;
 	end
@@ -291,6 +289,67 @@ def self.finishJob(theNode, jobID)
 		# Execute the done hook
 		puts "TODO: invoke cmd_done hook"
 	end
+
+end
+
+
+
+
+
+#============================================================================
+#		AgentClient::nodesForJob : Get the nodes for a job.
+#----------------------------------------------------------------------------
+def nodesForJob(theJob)
+
+	# Get the state we need
+	theNodes     = Cluster.nodes(theJob.grid);
+	localAddress = System.address;
+
+	maxPower  = 0.0;
+	maxMemory = 0.0;
+
+
+
+	# Determine our upper limits
+	theNodes.each do |theNode|
+		maxPower  = theNode.power  if (theNode.power  > maxPower);
+		maxMemory = theNode.memory if (theNode.memory > maxMemory);
+	end
+
+
+
+	# Sort the nodes
+	#
+	# The node's CPU power/memory are normalised to the upper bounds of the
+	# available nodes, then weighted by the job's priorities to give a score.
+	theNodes.sort! do |nodeA, nodeB|
+		scoreA = scoreForJob(theJob, nodeA, localAddress, maxPower, maxMemory);
+		scoreB = scoreForJob(theJob, nodeB, localAddress, maxPower, maxMemory);
+		scoreA <=> scoreB;
+	end
+
+	return(theNodes);
+
+end
+
+
+
+
+
+#============================================================================
+#		AgentClient::scoreForJob : Get a node's score for a job.
+#----------------------------------------------------------------------------
+def scoreForJob(theJob, theNode, localAddress, maxPower, maxMemory)
+
+	normalLocal  = (theNode.address == localAddress) ? 1 : 0;
+	normalPower  = theNode.power  / maxPower;
+	normalMemory = theNode.memory / maxMemory;
+
+	scoreLocal  = normalLocal  * theJob.weightLocal;
+	scorePower  = normalPower  * theJob.weightPower;
+	scoreMemory = normalMemory * theJob.weightMemory;
+	
+	return(scoreLocal + scorePower + scoreMemory);
 
 end
 

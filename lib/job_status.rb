@@ -137,19 +137,14 @@ def to_s
 
 	# Generate the short address
 	#
-	# A 'short address' encodes the difference between the source address
-	# within the job ID and the destination address that's executing the job.
+	# XORing the src and dst IP address gives us a shorter form that can
+	# be recombined with the dst address to recover the src address:
 	#
 	#		Src IP		0A000117	(10.0.1.23)
 	#		Dst IP		0A000107	(10.0.1.7)
-	#
-	#		Mask		000000FF
+	#		====================
 	#		Short IP	00000017
-	#
-	# The short address can be combined with the destination address to recover
-	# the original source address and hence the full job ID.
-	theMask = JobStatus::getMask(srcIP ^ dstIP);
-	shortIP = srcIP & theMask;
+	shortIP = srcIP ^ dstIP;
 
 
 
@@ -179,10 +174,9 @@ def self.from_s(theState, dstHost)
 
 	# Generate the source address
 	#
-	# Combining the 'short address' and the destination address it was generated
-	# on we can reapply the mask to obtain the original IP address.
-	theMask = getMask(shortIP);
-	srcIP   = shortIP | (dstIP & ~theMask)
+	# XORing the 'short address' and the dst address it was generated on gives
+	# us the original src address.
+	srcIP   = shortIP ^ dstIP;
 	srcHost = IPAddr.new(srcIP, Socket::AF_INET);
 
 
@@ -194,28 +188,6 @@ def self.from_s(theState, dstHost)
 	return(theStatus);
 
 end
-
-
-
-
-
-#============================================================================
-#		JobStatus::getMask : Get a mask for packing.
-#----------------------------------------------------------------------------
-def self.getMask(theValue)
-
-	# Generate the mask
-	mask1 = (((theValue >> 24) & 0xFF) == 0 ? 0 : 0xFF);
-	mask2 = (((theValue >> 16) & 0xFF) == 0 ? 0 : 0xFF);
-	mask3 = (((theValue >>  8) & 0xFF) == 0 ? 0 : 0xFF);
-	mask4 = (((theValue >>  0) & 0xFF) == 0 ? 0 : 0xFF);
-
-	theMask = (mask1 << 24) | (mask2 << 16) | (mask3 << 8) | (mask4 << 0);
-
-	return(theMask);
-
-end
-
 
 
 

@@ -124,10 +124,10 @@ end
 #============================================================================
 #		Daemon.start : Start a daemon to run a block.
 #----------------------------------------------------------------------------
-def Daemon.start(theCmd, &theBlock)
+def Daemon.start(theCmd, pathLog=nil, &theBlock)
 
 	# Get the state we need
-	pathLog = Workspace.pathLog(theCmd);
+	pathLog = Workspace.pathLog(theCmd) if (pathLog == nil);
 
 
 

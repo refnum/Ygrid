@@ -249,7 +249,23 @@ end
 #----------------------------------------------------------------------------
 def self.finishJob(theNode, jobID)
 	
-	# Record the job
+	# Update our state
+	#
+	# Any cluster update will invoke us for any finished jobs we originated.
+	#
+	# Since there may be multiple cluster updates before the job has been removed
+	# from the remote node we track the known finished jobs in our state and only
+	# process them the first time we see them.
+	#
+	# Since it may take some time between us closing the job on the remote node
+	# and the corresponding cluster upate we may continue to see updates for that
+	# job even after we've closed it.
+	#
+	# This is because cluster updates are triggered for any change in a node and
+	# so a node that's executing two jobs may receive two updates.
+	#
+	# We handle this by never purging IDs that we've seen, so that we only close
+	# jobs the first time we see them.
 	isKnown = false;
 
 	Workspace.stateCompletedJobs do |theState|
@@ -260,37 +276,20 @@ def self.finishJob(theNode, jobID)
 
 
 	# Finish the job
-	#
-	# Any cluster update will invoke us for any finished job on the node.
-	#
-	# Since there may be multiple cluster updates before the job has been removed
-	# from the remote node we track the known finished jobs in our state and only
-	# process them the first time we see them.
-	#
-	# Since it may take some time between us closing the job on the remote node and
-	# the corresponding cluster upate we may continue to see update for that job even
-	# after we've closed it so we leave closed jobs in our state to avoid processing
-	# them again.
-	#
-	# Since cluster event handlers must return quickly, but syncing the output files
-	# may take some time, we fork a daemon to do the cleanup work.
 	if (!isKnown)
-		Daemon.start("agent") do
-
-			# Finish the job
-			pathOpened = Workspace.pathOpenedJob(jobID);
-
-			Syncer.fetchJob( theNode,             jobID);
-			Agent.callServer(theNode, "closeJob", jobID);
-
-			FileUtils.rm_rf(pathOpened);
+		# Get the state we need
+		pathOpened = Workspace.pathOpenedJob(jobID);
 
 
+		# Fetch the output and clean up
+		Syncer.fetchJob( theNode,             jobID);
+		Agent.callServer(theNode, "closeJob", jobID);
 
-			# Execute the done hook
-			puts "TODO: invoke cmd_done hook"
-			
-		end
+		FileUtils.rm_rf(pathOpened);
+
+
+		# Execute the done hook
+		puts "TODO: invoke cmd_done hook"
 	end
 
 end

@@ -44,6 +44,7 @@
 # Imports
 #------------------------------------------------------------------------------
 require_relative 'agent';
+require_relative 'daemon';
 require_relative 'job_status';
 require_relative 'node';
 
@@ -76,15 +77,38 @@ end
 #------------------------------------------------------------------------------
 def memberUpdate(theNodes)
 
-	# Process the nodes
+	# Collect the finished jobs
+	#
+	# We only care about the jobs which originated from this node.
+	theJobs = Hash.new();
+
 	theNodes.each do |theNode|
 		theNode.jobs.each do |theStatus|
 
-			# Finish completed jobs
-			if (theStatus.status == JobStatus::DONE)
-				AgentClient.finishJob(theNode, theStatus.id);
+			if (theStatus.status   == JobStatus::DONE &&
+				theStatus.src_host == System.address)
+				theJobs[theStatus.id] = theNode;
 			end
 
+		end
+	end
+
+
+
+	# Finish them off
+	#
+	# Since cluster event handlers must return quickly, but syncing the output files
+	# from a finished job may take some time, we fork a daemon to do the work.
+	#
+	# This daemon is given a unique name (based on our pid) for its own pidfile but
+	# sends any output to the general cluster log.
+	if (!theJobs.empty?)
+		Daemon.start("event_#{Process.pid}", "cluster") do
+
+			theJobs.each_pair do |jobID, theNode|
+				AgentClient.finishJob(theNode, jobID);
+			end
+		
 		end
 	end
 	

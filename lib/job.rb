@@ -68,19 +68,19 @@ attr_accessor :src_host
 attr_accessor :src_index
 attr_accessor :cmd_task
 attr_accessor :cmd_done
-attr_accessor :inputs
-attr_accessor :outputs
+attr_accessor :files_input
+attr_accessor :files_output
 
 
-# Constants
-DEFAULT_GRID      = "";
-DEFAULT_HOST      = nil;
-DEFAULT_SRC_HOST  = nil;
-DEFAULT_SRC_INDEX = nil;
-DEFAULT_CMD_TASK  = "";
-DEFAULT_CMD_DONE  = "";
-DEFAULT_INPUTS    = [];
-DEFAULT_OUTPUTS   = [];
+# Defaults
+DEFAULT_GRID			= "";
+DEFAULT_HOST			= nil;
+DEFAULT_SRC_HOST		= nil;
+DEFAULT_SRC_INDEX		= nil;
+DEFAULT_CMD_TASK		= "";
+DEFAULT_CMD_DONE		= "";
+DEFAULT_FILES_INPUT		= [];
+DEFAULT_FILES_OUTPUT	= [];
 
 
 
@@ -128,14 +128,20 @@ def load(thePath)
 	# Load the job
 	theInfo = JSON.parse(IO.read(thePath));
 
-	@grid      = theInfo.fetch("grid",        DEFAULT_GRID);
-	@host      = theInfo.include?("host")     ? IPAddr.new(theInfo["host"])     : DEFAULT_HOST;
-	@src_host  = theInfo.include?("src_host") ? IPAddr.new(theInfo["src_host"]) : DEFAULT_HOST;
-	@src_index = theInfo.fetch("src_index",   DEFAULT_SRC_INDEX);
-	@cmd_task  = theInfo.fetch("cmd_task",    DEFAULT_CMD_TASK);
-	@cmd_done  = theInfo.fetch("cmd_done",    DEFAULT_CMD_DONE);
-	@inputs    = theInfo.fetch("inputs",      DEFAULT_INPUTS);
-	@outputs   = theInfo.fetch("outputs",     DEFAULT_OUTPUTS);
+	@grid			= theInfo.fetch("grid",				DEFAULT_GRID);
+	@host			= theInfo.fetch("host",				DEFAULT_HOST);
+	@src_host		= theInfo.fetch("src_host",			DEFAULT_SRC_HOST);
+	@src_index		= theInfo.fetch("src_index",		DEFAULT_SRC_INDEX);
+	@cmd_task		= theInfo.fetch("cmd_task",			DEFAULT_CMD_TASK);
+	@cmd_done		= theInfo.fetch("cmd_done",			DEFAULT_CMD_DONE);
+	@files_input	= theInfo.fetch("files_input",		DEFAULT_FILES_INPUT);
+	@files_output	= theInfo.fetch("files_output",		DEFAULT_FILES_OUTPUT);
+
+
+
+	# Convert the addresses
+	@host      = IPAddr.new(@host)     if (@host     != nil);
+	@src_host  = IPAddr.new(@src_host) if (@src_host != nil);
 
 end
 
@@ -152,14 +158,14 @@ def save(theFile)
 	tmpFile = theFile + "_tmp";
 	theInfo = Hash.new();
 
-	theInfo["grid"]      = @grid      if (@grid      != DEFAULT_GRID);
-	theInfo["host"]      = @host      if (@host      != DEFAULT_HOST);
-	theInfo["src_host"]  = @src_host  if (@src_host  != DEFAULT_SRC_HOST);
-	theInfo["src_index"] = @src_index if (@src_index != DEFAULT_SRC_INDEX);
-	theInfo["cmd_task"]  = @cmd_task  if (@cmd_task  != DEFAULT_CMD_TASK);
-	theInfo["cmd_done"]  = @cmd_done  if (@cmd_done  != DEFAULT_CMD_DONE);
-	theInfo["inputs"]    = @inputs    if (@inputs    != DEFAULT_INPUTS);
-	theInfo["outputs"]   = @outputs   if (@outputs   != DEFAULT_OUTPUTS);
+	theInfo["grid"]				= @grid				if (@grid			!= DEFAULT_GRID);
+	theInfo["host"]				= @host				if (@host			!= DEFAULT_HOST);
+	theInfo["src_host"]			= @src_host			if (@src_host		!= DEFAULT_SRC_HOST);
+	theInfo["src_index"]		= @src_index		if (@src_index		!= DEFAULT_SRC_INDEX);
+	theInfo["cmd_task"]			= @cmd_task			if (@cmd_task		!= DEFAULT_CMD_TASK);
+	theInfo["cmd_done"]			= @cmd_done			if (@cmd_done		!= DEFAULT_CMD_DONE);
+	theInfo["files_input"]		= @files_input		if (@files_input	!= DEFAULT_FILES_INPUT);
+	theInfo["files_output"]		= @files_output		if (@files_output	!= DEFAULT_FILES_OUTPUT);
 
 
 

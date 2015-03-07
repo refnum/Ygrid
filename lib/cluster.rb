@@ -265,8 +265,13 @@ end
 #----------------------------------------------------------------------------
 def Cluster.getTag(theTag, defaultValue="")
 
-	theInfo  = JSON.parse(`serf info -format=json`);
-	theValue = theInfo["tags"].fetch(theTag, defaultValue);
+	begin
+		theInfo  = JSON.parse(`serf info -format=json`);
+		theValue = theInfo["tags"].fetch(theTag, defaultValue);
+
+	rescue JSON::ParserError
+		theValue = defaultValue;
+	end
 
 	return(theValue);
 
@@ -310,7 +315,14 @@ def Cluster.getMembers
 	# Get the members
 	#
 	# Only alive members with a matching version can be talked to.
-	return(JSON.parse(`serf members -format=json -status alive -tag ver=#{Cluster::VERSION}`).fetch("members", {}));
+	begin
+		theMembers = JSON.parse(`serf members -format=json -status alive -tag ver=#{Cluster::VERSION}`).fetch("members", {});
+
+	rescue JSON::ParserError
+		theMembers = {};
+	end
+	
+	return(theMembers);
 
 end
 

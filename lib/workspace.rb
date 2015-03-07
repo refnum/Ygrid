@@ -167,9 +167,12 @@ end
 #============================================================================
 #		Workspace.pathJobs : Get a path to the jobs folder.
 #----------------------------------------------------------------------------
-def Workspace.pathJobs(thePath="")
+def Workspace.pathJobs(thePath="", theFile=nil)
 
-	return(Workspace.path("jobs/#{thePath}"));
+	thePath = Workspace.path("jobs/#{thePath}");
+	thePath = thePath + "/#{theFile}" if (theFile != nil);
+	
+	return(thePath);
 
 end
 
@@ -193,9 +196,9 @@ end
 #============================================================================
 #		Workspace.pathOpenedJob : Get the path to an opened job.
 #----------------------------------------------------------------------------
-def Workspace.pathOpenedJob(jobID)
+def Workspace.pathOpenedJob(jobID, theFile=nil)
 
-	return(Workspace.pathJobs("opened/#{jobID}"));
+	return(Workspace.pathJobs("opened/#{jobID}", theFile));
 
 end
 
@@ -208,10 +211,7 @@ end
 #----------------------------------------------------------------------------
 def Workspace.pathActiveJob(jobID, theFile=nil)
 
-	thePath = Workspace.pathJobs("active/#{jobID}");
-	thePath = thePath + "/#{theFile}" if (theFile != nil);
-	
-	return(thePath);
+	return(Workspace.pathJobs("active/#{jobID}", theFile));
 
 end
 
@@ -222,9 +222,9 @@ end
 #============================================================================
 #		Workspace.pathCompletedJob : Get the path to a completed job.
 #----------------------------------------------------------------------------
-def Workspace.pathCompletedJob(jobID)
+def Workspace.pathCompletedJob(jobID, theFile=nil)
 
-	return(Workspace.pathJobs("completed/#{jobID}"));
+	return(Workspace.pathJobs("completed/#{jobID}", theFile));
 
 end
 

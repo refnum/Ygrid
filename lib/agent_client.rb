@@ -345,9 +345,9 @@ def scoreForJob(theJob, theNode, localAddress, maxPower, maxMemory)
 	normalPower  = theNode.power  / maxPower;
 	normalMemory = theNode.memory / maxMemory;
 
-	scoreLocal  = normalLocal  * theJob.weightLocal;
-	scorePower  = normalPower  * theJob.weightPower;
-	scoreMemory = normalMemory * theJob.weightMemory;
+	scoreLocal  = normalLocal  * theJob.weight_local;
+	scorePower  = normalPower  * theJob.weight_cpu;
+	scoreMemory = normalMemory * theJob.weight_mem;
 	
 	return(scoreLocal + scorePower + scoreMemory);
 

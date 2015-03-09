@@ -110,8 +110,8 @@ def Status.nodeRow(theNode)
 
 	theColumns[:name] = theNode.pretty_name;
 	theColumns[:addr] = theNode.address;
-	theColumns[:cpus] = theNode.cpus   + " x " + theNode.speed + "Ghz";
-	theColumns[:mem]  = theNode.memory + "GB";
+	theColumns[:cpus] = theNode.cpus.to_s   + " x " + theNode.speed.to_s + "Ghz";
+	theColumns[:mem]  = theNode.memory.to_s + "GB";
 	theColumns[:load] = theNode.load;
 	theColumns[:jobs] = theNode.jobs.size;
 

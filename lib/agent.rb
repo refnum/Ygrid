@@ -101,7 +101,6 @@ end
 #----------------------------------------------------------------------------
 def Agent.submitJob(theGrid, theFile)
 
-	# Submit the job
 	jobID = callServer(System.address, "submitJob", theGrid, theFile);
 
 	return(jobID);
@@ -117,7 +116,6 @@ end
 #----------------------------------------------------------------------------
 def Agent.callServer(theAddress, theCmd, *theArgs)
 
-	# Call a server
 	begin
 		theServer = XMLRPC::Client.new(theAddress.to_s, nil, Agent::PORT);
 		theResult = theServer.call("ygrid." + theCmd, *theArgs);

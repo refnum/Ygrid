@@ -78,7 +78,9 @@ def initialize
 	end
 
 
-	startMonitor();
+
+	# Start status updates
+	startStatusUpdates();
 
 end
 
@@ -92,16 +94,15 @@ end
 def submitJob(theGrid, theFile)
 
 	# Get the state we need
-	theJob = Job.new(theFile);
-
-	theJob.grid      = theGrid;
-	theJob.src_host  = System.address;
-	theJob.src_index = nextJobIndex();
+	pathQueued = Workspace.pathQueuedJob(theJob.id);
+	theJob     = Job.new(theFile);
 
 
 
 	# Enqueue the job
-	pathQueued = Workspace.pathQueuedJob(theJob.id);
+	theJob.grid      = theGrid;
+	theJob.src_host  = System.address;
+	theJob.src_index = nextJobIndex();
 
 	theJob.save(pathQueued);
 
@@ -131,19 +132,16 @@ def openJob(jobID)
 		didOpen = (theState[:jobs].size < System.cpus);
 
 		if (didOpen)
-			# Save the job
-			theState[:jobs] << jobID;
-
-
-			# Create the state
 			FileUtils.mkdir_p(pathActive);
 			setJobStatus(jobID, JobStatus::ACTIVE);
+
+			theState[:jobs] << jobID;
 		end
 	end
 
 
 
-	# Update our state
+	# Update our status
 	updateJobsStatus();
 
 	return(didOpen);
@@ -166,17 +164,14 @@ def closeJob(jobID)
 
 	# Close the job
 	Workspace.stateActiveJobs do |theState|
-		# Forget the job
-		theState[:jobs].delete(jobID);
-
-
-		# Clean up
 		FileUtils.rm_rf(pathActive);
+
+		theState[:jobs].delete(jobID);
 	end
 
 
 
-	# Update our state
+	# Update our status
 	updateJobsStatus();
 
 	return(true);
@@ -231,14 +226,17 @@ def finishedJob(jobID)
 		theJob     = Job.new(pathOpened);
 
 
-		# Fetch the output
+
+		# Fetch the results
 		Syncer.fetchJob(theJob.host, jobID);
 
 
-		# Clean up
+
+		# Close the job
+		FileUtils.rm_rf(pathOpened);
+
 		Agent.callServer(theJob.host, "closeJob", jobID);
 
-		FileUtils.rm_rf(pathOpened);
 
 
 		# Execute the done hook
@@ -247,24 +245,6 @@ def finishedJob(jobID)
 	end
 
 	return(true);
-
-end
-
-
-
-
-
-#==============================================================================
-#		AgentServer::startMonitor : Start the monitor.
-#------------------------------------------------------------------------------
-def startMonitor
-
-	Thread.new do
-		loop do
-			updateJobsStatus();
-			sleep(MONITOR_POLL);
-		end
-	end
 
 end
 
@@ -296,6 +276,24 @@ end
 
 
 #==============================================================================
+#		AgentServer::startStatusUpdates : Start status updates.
+#------------------------------------------------------------------------------
+def startStatusUpdates
+
+	Thread.new do
+		loop do
+			updateJobsStatus();
+			sleep(MONITOR_POLL);
+		end
+	end
+
+end
+
+
+
+
+
+#==============================================================================
 #		AgentServer::updateJobsStatus : Update the jobs status.
 #------------------------------------------------------------------------------
 def updateJobsStatus
@@ -303,10 +301,10 @@ def updateJobsStatus
 	# Update the jobs status
 	#
 	# The status of jobs can be updated as a result of starting a job, executing
-	# a job, or the monitor thread.
+	# a job, or from the status thread.
 	#
-	# As these all run on separate threads we use our transaction as a simple
-	# lock to ensure only one thread updates the cluster at a time.
+	# As these all run on separate threads we use our transaction as a mutex to
+	# ensure only one thread updates the cluster at a time.
 	Workspace.stateActiveJobs do |theState|
 		# Collect the status
 		jobsStatus = [];

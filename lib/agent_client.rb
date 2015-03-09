@@ -71,7 +71,6 @@ QUEUE_POLL = 1.5;
 #----------------------------------------------------------------------------
 def run
 
-	# Run the client
 	loop do
 		dispatchJobs(waitForJobs());
 	end
@@ -167,7 +166,7 @@ def dispatchJobToGrid(theJob)
 	puts "Attempting to dispatch job #{theJob.id} to #{theNodes.size} nodes";
 
 	theNodes.each do |theNode|
-		didOpen = dispatchJobToNode(theNode, theJob);
+		didOpen = dispatchJobToNode(theJob, theNode);
 		break if didOpen;
 	end
 
@@ -182,14 +181,14 @@ end
 #============================================================================
 #		AgentClient::dispatchJobToNode : Dispatch a job to a node.
 #----------------------------------------------------------------------------
-def dispatchJobToNode(theNode, theJob)
+def dispatchJobToNode(theJob, theNode)
 
 	# Open the job
 	puts "Attempting to dispatch job #{theJob.id} to #{theNode.address}";
 	
 	didOpen = Agent.callServer(theNode.address, "openJob", theJob.id);
 
-	puts "#{theNode.address} #{didOpen ? 'accepted' : 'rejected'} job #{theJob.id}";
+	puts "  => #{theNode.address} #{didOpen ? 'accepted' : 'rejected'} job #{theJob.id}";
 
 
 
@@ -230,11 +229,8 @@ def executeJob(theNode, theJob)
 
 	# Execute the job
 	#
-	# The remote node will update the status of the job as it executes, which will
-	# trigger a cluster update for that node.
-	#
-	# Once the job is marked as finished by the remote node then finishJob will be
-	# invoked by the cluster event handler to fetch the results and close the job.
+	# The remote node will exece AgentServer::finishedJob on our local server when
+	# it has finished executing the job.
 	Agent.callServer(theJob.host, "executeJob", theJob.id);
 
 end
@@ -270,8 +266,8 @@ def nodesForJob(theJob)
 	# The node's CPU power/memory are normalised to the upper bounds of the
 	# available nodes, then weighted by the job's priorities to give a score.
 	theNodes.sort! do |nodeA, nodeB|
-		scoreA = scoreForJob(theJob, nodeA, localAddress, maxPower, maxMemory);
-		scoreB = scoreForJob(theJob, nodeB, localAddress, maxPower, maxMemory);
+		scoreA = nodeScoreForJob(theJob, nodeA, localAddress, maxPower, maxMemory);
+		scoreB = nodeScoreForJob(theJob, nodeB, localAddress, maxPower, maxMemory);
 		scoreA <=> scoreB;
 	end
 
@@ -284,9 +280,9 @@ end
 
 
 #============================================================================
-#		AgentClient::scoreForJob : Get a node's score for a job.
+#		AgentClient::nodeScoreForJob : Get a node's score for a job.
 #----------------------------------------------------------------------------
-def scoreForJob(theJob, theNode, localAddress, maxPower, maxMemory)
+def nodeScoreForJob(theJob, theNode, localAddress, maxPower, maxMemory)
 
 	normalLocal  = (theNode.address == localAddress) ? 1 : 0;
 	normalPower  = theNode.power  / maxPower;

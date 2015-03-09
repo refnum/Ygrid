@@ -45,7 +45,7 @@
 #------------------------------------------------------------------------------
 require 'json';
 
-require_relative 'job_status';
+require_relative 'job';
 require_relative 'node';
 require_relative 'utils';
 
@@ -143,10 +143,10 @@ def Status.jobRow(theStatus)
 	# Build the columns
 	theColumns = Hash.new();
 
-	theColumns[:job]    = theStatus.id;
-	theColumns[:source] = theStatus.src_host;
-	theColumns[:worker] = theStatus.dst_host;
-	theColumns[:status] = theStatus.pretty_status;
+	theColumns[:job]    = theStatus[:job];
+	theColumns[:source] = theStatus[:source];
+	theColumns[:worker] = theStatus[:worker];
+	theColumns[:status] = theStatus[:status];
 
 
 
@@ -178,7 +178,21 @@ def Status.showStatus(theGrid, theNodes)
 	theJobs = Array.new();
 
 	theNodes.each do |theNode|
-		theJobs.concat(theNode.jobs);
+		if (theNode.jobs.size != 0)
+
+			jobsStatus = Agent.callServer(theNode.address, "activeJobs");
+			jobsStatus.each_pair do |jobID, theInfo|
+			
+				theStatus          = theInfo.dup();
+				theStatus[:job]    = jobID;
+				theStatus[:source] = Job.decodeID(jobID)[:src_host];
+				theStatus[:worker] = theNode.address;
+				theStatus[:status] = theStatus["status"];
+
+				theJobs << theStatus;
+			end
+
+		end
 	end
 
 

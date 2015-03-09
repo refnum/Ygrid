@@ -253,6 +253,37 @@ end
 
 
 #==============================================================================
+#		AgentServer::activeJobs : Get the active jobs state.
+#------------------------------------------------------------------------------
+def activeJobs
+
+	# Get the state we need
+	jobsStatus = Hash.new();
+
+
+
+	# Get the state		
+	Workspace.stateActiveJobs do |theState|
+		theState[:jobs].each do |jobID|
+
+			theStatus          = Hash.new();
+			theStatus[:status] = getJobStatus(jobID).pretty_status;
+			theStatus[:start]  = Time.now();
+			
+			jobsStatus[jobID] = theStatus;
+
+		end
+	end
+
+	return(jobsStatus);
+
+end
+
+
+
+
+
+#==============================================================================
 #		AgentServer::nextJobIndex : Get the next job index.
 #------------------------------------------------------------------------------
 def nextJobIndex

@@ -72,7 +72,7 @@ HANDLER = File.dirname(__FILE__) + "/cluster_event.rb";
 CONFIG = {
 	"discover"       => "ygrid",
 	"log_level"      => "debug",
-	"event_handlers" => ["member-join,member-leave,member-update=#{Cluster::HANDLER}"],
+	"event_handlers" => ["member-leave,member-failed=#{Cluster::HANDLER}"],
 
 	"tags"     => {
 		"ver"  => Cluster::VERSION.to_s,

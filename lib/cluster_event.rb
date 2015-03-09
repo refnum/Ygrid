@@ -53,16 +53,6 @@ require_relative 'node';
 
 
 #==============================================================================
-#		memberJoin : Handle a member-join event.
-#------------------------------------------------------------------------------
-def memberJoin(theNodes)
-end
-
-
-
-
-
-#==============================================================================
 #		memberLeave : Handle a member-leave event.
 #------------------------------------------------------------------------------
 def memberLeave(theNodes)
@@ -73,45 +63,9 @@ end
 
 
 #==============================================================================
-#		memberUpdate : Handle a member-update event.
+#		memberFailed : Handle a member-failed event.
 #------------------------------------------------------------------------------
-def memberUpdate(theNodes)
-
-	# Collect the finished jobs
-	#
-	# We only care about the jobs which originated from this node.
-	theJobs = Hash.new();
-
-	theNodes.each do |theNode|
-		theNode.jobs.each do |theStatus|
-
-			if (theStatus.status   == JobStatus::DONE &&
-				theStatus.src_host == System.address)
-				theJobs[theStatus.id] = theNode;
-			end
-
-		end
-	end
-
-
-
-	# Finish them off
-	#
-	# Since cluster event handlers must return quickly, but syncing the output files
-	# from a finished job may take some time, we fork a daemon to do the work.
-	#
-	# This daemon is given a unique name (based on our pid) for its own pidfile but
-	# sends any output to the general cluster log.
-	if (!theJobs.empty?)
-		Daemon.start("event_#{Process.pid}", "cluster") do
-
-			theJobs.each_pair do |jobID, theNode|
-				AgentClient.finishJob(theNode, jobID);
-			end
-		
-		end
-	end
-	
+def memberFailed(theNodes)
 end
 
 
@@ -165,14 +119,11 @@ def cluster_event
 
 	# Handle the event
 	case ENV["SERF_EVENT"]
-		when "member-join"
-			memberJoin(theNodes);
-		
 		when "member-leave"
 			memberLeave(theNodes);
-		
-		when "member-update";
-			memberUpdate(theNodes);
+
+		when "member-failed"
+			memberFailed(theNodes);
 	end
 
 end

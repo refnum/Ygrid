@@ -206,6 +206,43 @@ def executeJob(jobID)
 
 		setJobStatus(jobID, JobStatus::DONE);
 		updateJobsStatus();
+
+		Agent.callServer(theJob.src_host, "finishedJob", jobID);
+	end
+
+	return(true);
+
+end
+
+
+
+
+
+#==============================================================================
+#		AgentServer::finishedJob : A job has finished.
+#------------------------------------------------------------------------------
+def finishedJob(jobID)
+
+	# Finish the job	
+	Thread.new do
+		# Get the state we need
+		pathOpened = Workspace.pathOpenedJob(jobID, Agent::JOB_FILE);
+		theJob     = Job.new(pathOpened);
+
+
+		# Fetch the output
+		Syncer.fetchJob(theJob.host, jobID);
+
+
+		# Clean up
+		Agent.callServer(theJob.host, "closeJob", jobID);
+
+		FileUtils.rm_rf(pathOpened);
+
+
+		# Execute the done hook
+		puts "TODO: invoke cmd_done hook"
+
 	end
 
 	return(true);

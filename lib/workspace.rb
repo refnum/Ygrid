@@ -326,19 +326,6 @@ end
 
 
 
-#============================================================================
-#		Workspace.stateCompletedJobs : Get the PStore for completed jobs.
-#----------------------------------------------------------------------------
-def Workspace.stateCompletedJobs(&theBlock)
-
-	return(Workspace.state(Workspace.pathJobs("completed/state.yml"), theBlock));
-
-end
-
-
-
-
-
 #==============================================================================
 # Module
 #------------------------------------------------------------------------------

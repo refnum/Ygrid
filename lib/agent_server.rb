@@ -89,22 +89,23 @@ end
 #==============================================================================
 #		AgentServer::submitJob : Submit a job.
 #------------------------------------------------------------------------------
-def submitJob(theGrid, theJob)
+def submitJob(theGrid, theFile)
 
-	# Prepare the job
+	# Get the state we need
+	theJob = Job.new(theFile);
+
 	theJob.grid      = theGrid;
 	theJob.src_host  = System.address;
 	theJob.src_index = nextJobIndex();
 
-	jobID = theJob.id;
 
 
+	# Enqueue the job
+	pathQueued = Workspace.pathQueuedJob(theJob.id);
 
-	# Save the job
-	thePath = Workspace.pathQueuedJob(jobID);
-	theJob.save(thePath);
+	theJob.save(pathQueued);
 
-	return(jobID);
+	return(theJob.id);
 
 end
 

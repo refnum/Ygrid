@@ -178,7 +178,9 @@ def Controller.submitJob(theGrid, theFile)
 
 
 	# Submit the job
-	Agent.submitJob(theGrid, theJob);
+	jobID = Agent.submitJob(theGrid, theFile);
+
+	return(jobID);
 
 end
 

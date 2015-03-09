@@ -99,10 +99,10 @@ end
 #============================================================================
 #		Agent.submitJob : Submit a job.
 #----------------------------------------------------------------------------
-def Agent.submitJob(theGrid, theJob)
+def Agent.submitJob(theGrid, theFile)
 
 	# Submit the job
-	jobID = callServer(System.address, "submitJob", theGrid, theJob);
+	jobID = callServer(System.address, "submitJob", theGrid, theFile);
 
 	return(jobID);
 

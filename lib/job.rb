@@ -44,7 +44,6 @@
 # Imports
 #------------------------------------------------------------------------------
 require 'json';
-require 'xmlrpc/utils';
 
 require_relative 'utils';
 
@@ -56,9 +55,6 @@ require_relative 'utils';
 # Class
 #------------------------------------------------------------------------------
 class Job
-
-# Includes
-include XMLRPC::Marshallable;
 
 
 # Attributes

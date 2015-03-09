@@ -146,9 +146,9 @@ def cmdSubmit(theArgs)
 
 
 	# Submit the job
-	theID = Controller.submitJob(theGrid, theFile);
+	jobID = Controller.submitJob(theGrid, theFile);
 
-	puts "#{theID}";
+	puts "#{jobID}";
 
 end
 

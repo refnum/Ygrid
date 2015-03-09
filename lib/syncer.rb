@@ -117,7 +117,7 @@ end
 #============================================================================
 #		Syncer.sendJob : Send a job to a node.
 #----------------------------------------------------------------------------
-def Syncer.sendJob(theNode, theID)
+def Syncer.sendJob(dstAddress, theID)
 
 	# Send the job
 	#
@@ -128,9 +128,9 @@ def Syncer.sendJob(theNode, theID)
 	# As our path is just the job ID our source is the parent folder.
 	pathOpened = File.dirname(Workspace.pathOpenedJob(theID));
 	pathActive = File.dirname(Workspace.pathActiveJob(theID));
-	dstURL     = workspaceURL(theNode, pathActive);
+	dstURL     = workspaceURL(dstAddress, pathActive);
 
-	transferFiles(theNode, [theID], pathOpened, dstURL);
+	transferFiles(pathOpened, dstURL, [theID]);
 
 end
 
@@ -141,7 +141,7 @@ end
 #============================================================================
 #		Syncer.fetchJob : Fetch a job from a node.
 #----------------------------------------------------------------------------
-def Syncer.fetchJob(theNode, theID)
+def Syncer.fetchJob(srcAddress, theID)
 
 	# Fetch the job
 	#
@@ -152,9 +152,9 @@ def Syncer.fetchJob(theNode, theID)
 	# As our path is just the job ID our destination is the parent folder.
 	pathActive    = File.dirname(Workspace.pathActiveJob(   theID));
 	pathCompleted = File.dirname(Workspace.pathCompletedJob(theID));
-	srcURL        = workspaceURL(theNode, pathActive);
+	srcURL        = workspaceURL(srcAddress, pathActive);
 
-	transferFiles(theNode, [theID], srcURL, pathCompleted);
+	transferFiles(srcURL, pathCompleted, [theID]);
 
 end
 
@@ -165,7 +165,7 @@ end
 #============================================================================
 #		Syncer.sendFiles : Send files to a node.
 #----------------------------------------------------------------------------
-def Syncer.sendFiles(theNode, theFiles)
+def Syncer.sendFiles(dstAddress, theFiles)
 
 	# Send the files
 	#
@@ -174,10 +174,10 @@ def Syncer.sendFiles(theNode, theFiles)
 	#		/path/to/file.txt  =>  ygrid/hosts/10.0.1.2/path/to/file.txt
 	#
 	# As our paths are absolute paths our source is "/".
-	pathHost = Workspace.pathHost(theNode.address);
-	dstURL   = workspaceURL(theNode, pathHost);
+	pathHost = Workspace.pathHost(dstAddress);
+	dstURL   = workspaceURL(dstAddress, pathHost);
 
-	transferFiles(theNode, theFiles, "/", dstURL);
+	transferFiles("/", dstURL, theFiles);
 
 end
 
@@ -188,7 +188,7 @@ end
 #============================================================================
 #		Syncer.fetchFiles : Fetch files from a node.
 #----------------------------------------------------------------------------
-def Syncer.fetchFiles(theNode, theFiles)
+def Syncer.fetchFiles(srcAddress, theFiles)
 
 	# Fetch the files
 	#
@@ -197,10 +197,10 @@ def Syncer.fetchFiles(theNode, theFiles)
 	#		ygrid/hosts/10.0.1.2/path/to/file.txt  =>  /path/to/file.txt
 	#
 	# As our paths are absolute paths our destination is "/".
-	pathHost = Workspace.pathHost(theNode.address);
-	srcURL   = workspaceURL(theNode, pathHost);
+	pathHost = Workspace.pathHost(srcAddress);
+	srcURL   = workspaceURL(srcAddress, pathHost);
 
-	transferFiles(theNode, theFiles, srcURL, "/");
+	transferFiles(srcURL, "/", theFiles);
 
 end
 
@@ -211,7 +211,7 @@ end
 #============================================================================
 #		Syncer.transferFiles : Transfer files.
 #----------------------------------------------------------------------------
-def Syncer.transferFiles(theNode, theFiles, theSrc, theDst)
+def Syncer.transferFiles(theSrc, theDst, theFiles)
 
 	# Get the state we need
 	pathLog = Workspace.pathLog("syncer");
@@ -256,7 +256,7 @@ end
 #============================================================================
 #		Syncer.workspaceURL : Get the URL for a workspace path.
 #----------------------------------------------------------------------------
-def Syncer.workspaceURL(theNode, thePath)
+def Syncer.workspaceURL(theAddress, thePath)
 
 	# Construct the URL
 	#
@@ -265,7 +265,7 @@ def Syncer.workspaceURL(theNode, thePath)
 	pathWorkspace = Workspace.path();
 	
 	thePath = thePath[pathWorkspace.size()..-1];
-	theURL  = "rsync://#{theNode.address}:#{Syncer::PORT}/ygrid/#{thePath}";
+	theURL  = "rsync://#{theAddress}:#{Syncer::PORT}/ygrid/#{thePath}";
 
 	return(theURL);
 

@@ -187,7 +187,7 @@ def dispatchJobToNode(theNode, theJob)
 	# Open the job
 	puts "Attempting to dispatch job #{theJob.id} to #{theNode.address}";
 	
-	didOpen = Agent.callServer(theNode, "openJob", theJob.id);
+	didOpen = Agent.callServer(theNode.address, "openJob", theJob.id);
 
 	puts "#{theNode.address} #{didOpen ? 'accepted' : 'rejected'} job #{theJob.id}";
 
@@ -223,7 +223,7 @@ def executeJob(theNode, theJob)
 	FileUtils.mkdir_p(pathOpened);
 	FileUtils.mv(pathQueued, pathOpened + "/" + Agent::JOB_FILE);
 
-	Syncer.sendJob(theNode, theJob.id);
+	Syncer.sendJob(theJob.host, theJob.id);
 
 
 
@@ -234,7 +234,7 @@ def executeJob(theNode, theJob)
 	#
 	# Once the job is marked as finished by the remote node then finishJob will be
 	# invoked by the cluster event handler to fetch the results and close the job.
-	Agent.callServer(theNode, "executeJob", theJob.id);
+	Agent.callServer(theJob.host, "executeJob", theJob.id);
 
 end
 
@@ -280,8 +280,8 @@ def self.finishJob(theNode, jobID)
 
 
 		# Fetch the output and clean up
-		Syncer.fetchJob( theNode,             jobID);
-		Agent.callServer(theNode, "closeJob", jobID);
+		Syncer.fetchJob( theNode.address,             jobID);
+		Agent.callServer(theNode.address, "closeJob", jobID);
 
 		FileUtils.rm_rf(pathOpened);
 

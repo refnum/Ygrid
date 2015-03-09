@@ -102,8 +102,7 @@ end
 def Agent.submitJob(theGrid, theJob)
 
 	# Submit the job
-	theNode = Node.new();
-	jobID   = callServer(theNode, "submitJob", theGrid, theJob);
+	jobID = callServer(System.address, "submitJob", theGrid, theJob);
 
 	return(jobID);
 
@@ -116,11 +115,11 @@ end
 #============================================================================
 #		Agent.callServer : Call a server.
 #----------------------------------------------------------------------------
-def Agent.callServer(theNode, theCmd, *theArgs)
+def Agent.callServer(theAddress, theCmd, *theArgs)
 
 	# Call a server
 	begin
-		theServer = XMLRPC::Client.new(theNode.address.to_s, nil, Agent::PORT);
+		theServer = XMLRPC::Client.new(theAddress.to_s, nil, Agent::PORT);
 		theResult = theServer.call("ygrid." + theCmd, *theArgs);
 
 	rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH

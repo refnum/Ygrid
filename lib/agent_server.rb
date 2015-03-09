@@ -93,16 +93,16 @@ end
 #------------------------------------------------------------------------------
 def submitJob(theGrid, theFile)
 
-	# Get the state we need
-	pathQueued = Workspace.pathQueuedJob(theJob.id);
-	theJob     = Job.new(theFile);
+	# Prepare the job
+	theJob           = Job.new(theFile);
+	theJob.grid      = theGrid;
+	theJob.src_host  = System.address;
+	theJob.src_index = nextJobIndex();
 
 
 
 	# Enqueue the job
-	theJob.grid      = theGrid;
-	theJob.src_host  = System.address;
-	theJob.src_index = nextJobIndex();
+	pathQueued = Workspace.pathQueuedJob(theJob.id);
 
 	theJob.save(pathQueued);
 

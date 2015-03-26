@@ -165,8 +165,7 @@ end
 #----------------------------------------------------------------------------
 def save(theFile)
 
-	# Get the state we need
-	tmpFile = theFile + "_tmp";
+	# Save the job
 	theInfo = Hash.new();
 
 	theInfo[:grid]				= @grid					if (@grid				!= DEFAULT_GRID);
@@ -183,13 +182,7 @@ def save(theFile)
 	theInfo[:weight_cpu]		= @weight_cpu			if (@weight_cpu			!= DEFAULT_WEIGHT_CPU);
 	theInfo[:weight_mem]		= @weight_mem			if (@weight_mem			!= DEFAULT_WEIGHT_MEM);
 
-
-
-	# Save the file
-	#
-	# To ensure the write is atomic we save to a temporary and then rename.
-	IO.write(    tmpFile, JSON.pretty_generate(theInfo) + "\n");
-	FileUtils.mv(tmpFile, theFile);
+	Utils.atomicWrite(theFile, JSON.pretty_generate(theInfo) + "\n");
 
 end
 

@@ -214,6 +214,9 @@ def executeJob(theNode, theJob)
 	pathQueued = Workspace.pathQueuedJob(theJob.id);
 	pathOpened = Workspace.pathOpenedJob(theJob.id, Agent::JOB_FILE);
 
+	theFiles =  theJob.task_inputs;
+	theFiles << theJob.task_stdin if (theJob.task_stdin != nil);
+
 
 
 	# Send the job
@@ -223,14 +226,15 @@ def executeJob(theNode, theJob)
 	FileUtils.rm(pathQueued);
 	theJob.save( pathOpened);
 
-	Syncer.sendJob(theJob.host, theJob.id);
+	Syncer.sendJob(  theJob.host, theJob.id);
+	Syncer.sendFiles(theJob.host, theFiles) if (!theFiles.empty?);
 
 
 
 	# Execute the job
 	#
-	# The remote node will exece AgentServer::finishedJob on our local server when
-	# it has finished executing the job.
+	# The remote node will exece AgentServer::finishedJob on our local server
+	# when it has finished executing the job.
 	Agent.callServer(theJob.host, "executeJob", theJob.id);
 
 end

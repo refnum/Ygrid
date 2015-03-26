@@ -128,19 +128,19 @@ end
 def load(thePath)
 
 	# Load the job
-	theInfo = JSON.parse(IO.read(thePath));
+	theInfo = JSON.parse(IO.read(thePath), {:symbolize_names => true});
 
-	@grid			= theInfo.fetch("grid",				DEFAULT_GRID);
-	@host			= theInfo.fetch("host",				DEFAULT_HOST);
-	@src_host		= theInfo.fetch("src_host",			DEFAULT_SRC_HOST);
-	@src_index		= theInfo.fetch("src_index",		DEFAULT_SRC_INDEX);
-	@cmd_task		= theInfo.fetch("cmd_task",			DEFAULT_CMD_TASK);
-	@cmd_done		= theInfo.fetch("cmd_done",			DEFAULT_CMD_DONE);
-	@files_input	= theInfo.fetch("files_input",		DEFAULT_FILES_INPUT);
-	@files_output	= theInfo.fetch("files_output",		DEFAULT_FILES_OUTPUT);
-	@weight_local	= theInfo.fetch("weight_local",		DEFAULT_WEIGHT_LOCAL);
-	@weight_cpu		= theInfo.fetch("weight_cpu",		DEFAULT_WEIGHT_CPU);
-	@weight_mem		= theInfo.fetch("weight_mem",		DEFAULT_WEIGHT_MEM);
+	@grid			= theInfo.fetch(:grid,			DEFAULT_GRID);
+	@host			= theInfo.fetch(:host,			DEFAULT_HOST);
+	@src_host		= theInfo.fetch(:src_host,		DEFAULT_SRC_HOST);
+	@src_index		= theInfo.fetch(:src_index,		DEFAULT_SRC_INDEX);
+	@cmd_task		= theInfo.fetch(:cmd_task,		DEFAULT_CMD_TASK);
+	@cmd_done		= theInfo.fetch(:cmd_done,		DEFAULT_CMD_DONE);
+	@files_input	= theInfo.fetch(:files_input,	DEFAULT_FILES_INPUT);
+	@files_output	= theInfo.fetch(:files_output,	DEFAULT_FILES_OUTPUT);
+	@weight_local	= theInfo.fetch(:weight_local,	DEFAULT_WEIGHT_LOCAL);
+	@weight_cpu		= theInfo.fetch(:weight_cpu,	DEFAULT_WEIGHT_CPU);
+	@weight_mem		= theInfo.fetch(:weight_mem,	DEFAULT_WEIGHT_MEM);
 
 
 
@@ -163,17 +163,17 @@ def save(theFile)
 	tmpFile = theFile + "_tmp";
 	theInfo = Hash.new();
 
-	theInfo["grid"]				= @grid				if (@grid			!= DEFAULT_GRID);
-	theInfo["host"]				= @host				if (@host			!= DEFAULT_HOST);
-	theInfo["src_host"]			= @src_host			if (@src_host		!= DEFAULT_SRC_HOST);
-	theInfo["src_index"]		= @src_index		if (@src_index		!= DEFAULT_SRC_INDEX);
-	theInfo["cmd_task"]			= @cmd_task			if (@cmd_task		!= DEFAULT_CMD_TASK);
-	theInfo["cmd_done"]			= @cmd_done			if (@cmd_done		!= DEFAULT_CMD_DONE);
-	theInfo["files_input"]		= @files_input		if (@files_input	!= DEFAULT_FILES_INPUT);
-	theInfo["files_output"]		= @files_output		if (@files_output	!= DEFAULT_FILES_OUTPUT);
-	theInfo["weight_local"]		= @weight_local		if (@weight_local	!= DEFAULT_WEIGHT_LOCAL);
-	theInfo["weight_cpu"]		= @weight_cpu		if (@weight_cpu		!= DEFAULT_WEIGHT_CPU);
-	theInfo["weight_mem"]		= @weight_mem		if (@weight_mem		!= DEFAULT_WEIGHT_MEM);
+	theInfo[:grid]			= @grid				if (@grid			!= DEFAULT_GRID);
+	theInfo[:host]			= @host				if (@host			!= DEFAULT_HOST);
+	theInfo[:src_host]		= @src_host			if (@src_host		!= DEFAULT_SRC_HOST);
+	theInfo[:src_index]		= @src_index		if (@src_index		!= DEFAULT_SRC_INDEX);
+	theInfo[:cmd_task]		= @cmd_task			if (@cmd_task		!= DEFAULT_CMD_TASK);
+	theInfo[:cmd_done]		= @cmd_done			if (@cmd_done		!= DEFAULT_CMD_DONE);
+	theInfo[:files_input]	= @files_input		if (@files_input	!= DEFAULT_FILES_INPUT);
+	theInfo[:files_output]	= @files_output		if (@files_output	!= DEFAULT_FILES_OUTPUT);
+	theInfo[:weight_local]	= @weight_local		if (@weight_local	!= DEFAULT_WEIGHT_LOCAL);
+	theInfo[:weight_cpu]	= @weight_cpu		if (@weight_cpu		!= DEFAULT_WEIGHT_CPU);
+	theInfo[:weight_mem]	= @weight_mem		if (@weight_mem		!= DEFAULT_WEIGHT_MEM);
 
 
 

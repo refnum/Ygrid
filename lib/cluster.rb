@@ -69,17 +69,17 @@ VERSION = 1;
 HANDLER = File.dirname(__FILE__) + "/cluster_event.rb";
 
 CONFIG = {
-	"discover"       => "ygrid",
-	"log_level"      => "debug",
-	"event_handlers" => ["member-leave,member-failed=#{Cluster::HANDLER}"],
+	:discover       => "ygrid",
+	:log_level      => "debug",
+	:event_handlers => ["member-leave,member-failed=#{Cluster::HANDLER}"],
 
-	"tags"     => {
-		"ver"  => Cluster::VERSION.to_s,
-		"os"   => System.os,
-		"cpu"  => System.cpus.to_s,
-		"ghz"  => System.speed.to_s,
-		"mem"  => System.memory.to_s,
-		"load" => System.load.to_s
+	:tags     => {
+		:ver  => Cluster::VERSION.to_s,
+		:os   => System.os,
+		:cpu  => System.cpus.to_s,
+		:ghz  => System.speed.to_s,
+		:mem  => System.memory.to_s,
+		:load => System.load.to_s
 	}
 };
 
@@ -96,8 +96,8 @@ def Cluster.start(theGrids)
 	pathConfig = Workspace.pathConfig("cluster");
 	pathLog    = Workspace.pathLog(   "cluster");
 
-	theConfig                  = CONFIG.dup();
-	theConfig["tags"]["grids"] = theGrids.join(",") if (!theGrids.empty?);
+	theConfig                = CONFIG.dup();
+	theConfig[:tags][:grids] = theGrids.join(",") if (!theGrids.empty?);
 
 	abort("Cluster already running!") if (Daemon.running?("cluster"));
 
@@ -124,7 +124,7 @@ end
 def Cluster.joinGrids(theGrids)
 
 	# Join the grids
-	addToTag("grids", theGrids.join(","));
+	addToTag(:grids, theGrids.join(","));
 
 end
 
@@ -138,7 +138,7 @@ end
 def Cluster.leaveGrids(theGrids)
 
 	# Leave the grids
-	removeFromTag("grids", theGrids.join(","));
+	removeFromTag(:grids, theGrids.join(","));
 
 end
 
@@ -152,9 +152,9 @@ end
 def Cluster.openedJob
 
 	# Update the jobs
-	numJobs = getTag("jobs", "0").to_i + 1;
+	numJobs = getTag(:jobs, "0").to_i + 1;
 
-	setTag("jobs", numJobs.to_s);
+	setTag(:jobs, numJobs.to_s);
 
 end
 
@@ -168,9 +168,9 @@ end
 def Cluster.closedJob
 
 	# Update the jobs
-	numJobs = getTag("jobs").to_i - 1;
+	numJobs = getTag(:jobs).to_i - 1;
 
-	setTag("jobs", numJobs.to_s);
+	setTag(:jobs, numJobs.to_s);
 
 end
 
@@ -183,7 +183,7 @@ end
 #----------------------------------------------------------------------------
 def Cluster.updateLoad
 
-	setTag("load", System.load.to_s);
+	setTag(:load, System.load.to_s);
 
 end
 
@@ -206,7 +206,7 @@ def Cluster.grids
 
 	# Get the grids
 	theMembers.each do |theMember|
-		theGrids.concat(theMember["tags"].fetch("grids", "").split(","));
+		theGrids.concat(theMember[:tags].fetch(:grids, "").split(","));
 	end
 
 	return(theGrids.sort.uniq);
@@ -233,11 +233,11 @@ def Cluster.nodes(theGrid)
 	# Nodes that are not in any named grid are in the default empty grid.
 	theMembers.each do |theMember|
 
-		theGrids = theMember["tags"].fetch("grids", "").split(",");
+		theGrids = theMember[:tags].fetch(:grids, "").split(",");
 		theGrids << "" if (theGrids.empty?);
 
 		if (theGrids.include?(theGrid))
-			theNodes << Node.new(theMember["name"], theMember["addr"], theMember["tags"]);
+			theNodes << Node.new(theMember[:name], theMember[:addr], theMember[:tags]);
 		end
 
 	end
@@ -290,8 +290,8 @@ end
 def Cluster.getTag(theTag, defaultValue="")
 
 	begin
-		theInfo  = JSON.parse(`serf info -format=json`);
-		theValue = theInfo["tags"].fetch(theTag, defaultValue);
+		theInfo  = JSON.parse(`serf info -format=json`, {:symbolize_names => true});
+		theValue = theInfo[:tags].fetch(theTag, defaultValue);
 
 	rescue JSON::ParserError
 		theValue = defaultValue;
@@ -340,7 +340,8 @@ def Cluster.getMembers
 	#
 	# Only live members with a matching version can be talked to.
 	begin
-		theMembers = JSON.parse(`serf members -format=json -status alive -tag ver=#{Cluster::VERSION}`).fetch("members", {});
+		theMembers = JSON.parse(`serf members -format=json -status alive -tag ver=#{Cluster::VERSION}`, {:symbolize_names => true});
+		theMembers = theMembers.fetch(:members, {});
 
 	rescue JSON::ParserError
 		theMembers = {};

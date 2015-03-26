@@ -77,11 +77,11 @@ def initialize(theName=nil, theAddress=nil, theTags=nil)
 		@address = System.address;
 		@tags    = Hash.new();
 
-		@tags["os"]   = System.os;
-		@tags["cpu"]  = System.cpus;
-		@tags["ghz"]  = System.speed;
-		@tags["mem"]  = System.memory;
-		@tags["load"] = System.load;
+		@tags[:os]   = System.os;
+		@tags[:cpu]  = System.cpus;
+		@tags[:ghz]  = System.speed;
+		@tags[:mem]  = System.memory;
+		@tags[:load] = System.load;
 
 
 	# Specified node
@@ -128,7 +128,7 @@ end
 #------------------------------------------------------------------------------
 def os
 
-	return(@tags["os"]);
+	return(@tags[:os]);
 
 end
 
@@ -141,7 +141,7 @@ end
 #------------------------------------------------------------------------------
 def cpus
 
-	return(@tags["cpu"].to_i);
+	return(@tags[:cpu].to_i);
 
 end
 
@@ -154,7 +154,7 @@ end
 #------------------------------------------------------------------------------
 def speed
 
-	return(@tags["ghz"].to_f);
+	return(@tags[:ghz].to_f);
 
 end
 
@@ -167,7 +167,7 @@ end
 #------------------------------------------------------------------------------
 def memory
 
-	return(@tags["mem"].to_i);
+	return(@tags[:mem].to_i);
 
 end
 
@@ -180,7 +180,7 @@ end
 #------------------------------------------------------------------------------
 def load
 
-	return(@tags["load"].to_f);
+	return(@tags[:load].to_f);
 
 end
 
@@ -193,7 +193,7 @@ end
 #------------------------------------------------------------------------------
 def jobs
 
-	return(@tags["jobs"].to_i);
+	return(@tags[:jobs].to_i);
 
 end
 

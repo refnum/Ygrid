@@ -60,19 +60,19 @@ module Status
 
 NODE_COLUMNS = {
 	:name => { :title => "Node",      :width => 25 },
-	:addr => { :title => "Address",   :width => 18 },
-	:cpus => { :title => "CPUs",      :width => 15 },
-	:mem  => { :title => "Memory",    :width => 14 },
-	:load => { :title => "Load",      :width => 10 },
+	:addr => { :title => "Address",   :width => 19 },
+	:cpus => { :title => "CPUs",      :width => 16 },
+	:mem  => { :title => "Memory",    :width => 10 },
+	:load => { :title => "Load",      :width => 8  },
 	:jobs => { :title => "Jobs",      :width => 4  }
 };
 
 JOB_COLUMNS = {
 	:id     => { :title => "Job",     :width => 20 },
-	:source => { :title => "Source",  :width => 20 },
-	:worker => { :title => "Worker",  :width => 20 },
-	:time   => { :title => "Time",    :width => 14 },
-	:status => { :title => "Status",  :width => 8  },
+	:source => { :title => "Source",  :width => 19 },
+	:worker => { :title => "Worker",  :width => 19 },
+	:time   => { :title => "Time",    :width => 12 },
+	:status => { :title => "Status",  :width => 6  },
 };
 
 

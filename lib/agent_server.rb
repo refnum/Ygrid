@@ -341,28 +341,47 @@ end
 def invokeJob(theJob)
 
 	# Get the state we need
-	theOptions     = Hash.new();
+	jobID = theJob.id;
+
 	theEnvironment = Hash.new();
+	theOptions     = Hash.new();
 
-	theOptions[:chdir]           = "/tmp";
-	theOptions[:unsetenv_others] = true;
-	theOptions[STDIN]            = theJob.task_stdin if (theJob.task_stdin != nil && File.exists?(theJob.task_stdin));
-	theOptions[STDOUT]           = Workspace.pathActiveJob(theJob.id, Agent::JOB_STDOUT);
-	theOptions[STDERR]           = Workspace.pathActiveJob(theJob.id, Agent::JOB_STDERR);
 
+
+	# Build the environment
+	#
+	# All environment keys and values must be converted to strings.
 	theJob.task_environment.each_pair do |theKey, theValue|
 		theEnvironment[theKey.to_s] = theValue.to_s;
 	end
 
+	theEnvironment["YGRID_JOB_ID"]        = jobID;
+	theEnvironment["YGRID_JOB_GRID"]      = theJob.grid;
+	theEnvironment["YGRID_HOST_SRC"]      = theJob.src_host.to_s;
+	theEnvironment["YGRID_HOST_DST"]      = theJob.host.to_s;
+	theEnvironment["YGRID_PATH_STDIN"]    = theJob.task_stdin;
+	theEnvironment["YGRID_PATH_STDOUT"]   = Workspace.pathActiveJob(jobID, Agent::JOB_STDOUT);
+	theEnvironment["YGRID_PATH_STDERR"]   = Workspace.pathActiveJob(jobID, Agent::JOB_STDERR);
+	theEnvironment["YGRID_PATH_PROGRESS"] = Workspace.pathActiveJob(jobID, Agent::JOB_STATUS);
+
+
+
+	# Build the options
+	theOptions[:chdir]           = "/tmp";
+	theOptions[:unsetenv_others] = true;
+	theOptions[:in]              = theEnvironment["YGRID_PATH_STDIN"];
+	theOptions[:out]             = theEnvironment["YGRID_PATH_STDOUT"];
+	theOptions[:err]             = theEnvironment["YGRID_PATH_STDERR"];
+
 
 
 	# Invoke the job
-	setJobStatus(theJob.id, Agent::PROGRESS_ACTIVE);
+	setJobStatus(jobID, Agent::PROGRESS_ACTIVE);
 
 	thePID = Process.spawn(theEnvironment, theJob.cmd_task, theOptions);
 	Process.wait(thePID);
 
-	setJobStatus(theJob.id, Agent::PROGRESS_DONE);
+	setJobStatus(jobID, Agent::PROGRESS_DONE);
 
 end
 

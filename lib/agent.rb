@@ -122,7 +122,7 @@ def Agent.callServer(theAddress, theCmd, *theArgs)
 
 	begin
 		theServer = XMLRPC::Client.new(theAddress.to_s, nil, Agent::PORT);
-		theResult = theServer.call("ygrid." + theCmd, *theArgs);
+		theResult = processResult(theServer.call("ygrid." + theCmd, *theArgs));
 
 	rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
 		puts "Agent unable to connect to #{theHost} for #{theCmd}";
@@ -130,6 +130,40 @@ def Agent.callServer(theAddress, theCmd, *theArgs)
 	end
 
 	return(theResult);
+
+end
+
+
+
+
+
+#============================================================================
+#		Agent.processResult : Process an XMLRPC result.
+#----------------------------------------------------------------------------
+def Agent.processResult(theObject)
+
+	# Process the result
+	#
+	# The result of an XMLRPC call may not be what the server actually returns,
+	# so we attempt to correct some of these here:
+	#
+	#   o Hash keys are converted from strings back to symbols.
+	#   o Times are converted from XMLRPC::DateTime back to Time.
+	#
+	# XMLRPC::DateTime is used because Time can't represent times prior to the
+	# epoch, but for our purposes it's more useful to be able to return a Time.
+	if (theObject.is_a?(Array))
+		theObject = theObject.map{ |v| v.is_a?(Array) || v.is_a?(Hash) ? processResult(v) : v; }
+
+	elsif (theObject.is_a?(Hash))
+		theObject = theObject.inject({}) {|memo, (k,v)| memo[k.to_sym] = processResult(v); memo; }
+
+	elsif theObject.is_a?(XMLRPC::DateTime)
+		theObject = theObject.to_time;
+
+	end
+
+	return(theObject);
 
 end
 

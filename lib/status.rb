@@ -48,7 +48,6 @@ require 'json';
 require_relative 'agent';
 require_relative 'job';
 require_relative 'node';
-require_relative 'utils';
 
 
 
@@ -69,9 +68,10 @@ NODE_COLUMNS = {
 };
 
 JOB_COLUMNS = {
-	:job    => { :title => "Job",     :width => 20 },
+	:id     => { :title => "Job",     :width => 20 },
 	:source => { :title => "Source",  :width => 20 },
 	:worker => { :title => "Worker",  :width => 20 },
+	:time   => { :title => "Time",    :width => 14 },
 	:status => { :title => "Status",  :width => 8  },
 };
 
@@ -121,9 +121,9 @@ def Status.nodeRow(theNode)
 	# Get the row
 	theRow = "";
 
-	NODE_COLUMNS.each_pair do |theKey, theInfo|
-		theText  = theColumns[theKey].to_s;
-		theWidth = theInfo[:width];
+	NODE_COLUMNS.each_pair do |theColumn, columnInfo|
+		theText  = theColumns[theColumn].to_s;
+		theWidth = columnInfo[:width];
 		
 		theRow << theText.slice(0, theWidth-1).ljust(theWidth);
 	end
@@ -139,16 +139,17 @@ end
 #============================================================================
 #		Status.jobRow : Get a job table row.
 #----------------------------------------------------------------------------
-def Status.jobRow(theStatus)
+def Status.jobRow(jobID, theInfo)
 
 	# Build the columns
 	theColumns = Hash.new();
 
-	theColumns[:job]    = theStatus[:job];
-	theColumns[:source] = theStatus[:source];
-	theColumns[:worker] = theStatus[:worker];
-	
-	case theStatus[:status]
+	theColumns[:id]     = jobID;
+	theColumns[:source] = theInfo[:source];
+	theColumns[:worker] = theInfo[:worker];
+	theColumns[:time]   = theInfo[:time];
+
+	case theInfo[:status]
 		when Agent::PROGRESS_ACTIVE
 			theColumns[:status] = "Active";
 
@@ -156,7 +157,7 @@ def Status.jobRow(theStatus)
 			theColumns[:status] = "Done";
 
 		else
-			theColumns[:status] = theStatus[:status] + "%";
+			theColumns[:status] = theInfo[:status] + "%";
 	end
 
 
@@ -164,9 +165,9 @@ def Status.jobRow(theStatus)
 	# Get the row
 	theRow = "";
 
-	JOB_COLUMNS.each_pair do |theKey, theInfo|
-		theText  = theColumns[theKey].to_s;
-		theWidth = theInfo[:width];
+	JOB_COLUMNS.each_pair do |theColumn, columnInfo|
+		theText  = theColumns[theColumn].to_s;
+		theWidth = columnInfo[:width];
 
 		theRow << theText.slice(0, theWidth-1).ljust(theWidth);
 	end
@@ -180,31 +181,59 @@ end
 
 
 #============================================================================
+#		Status.collectJobs : Collect the jobs for a grid.
+#----------------------------------------------------------------------------
+def Status.collectJobs(theGrid, theNodes)
+
+	# Get the state we need
+	theJobs = Hash.new();
+
+
+
+	# Collect the jobs
+	theNodes.each do |theNode|
+		theStatus = Agent.callServer(theNode.address, "currentStatus");
+		theStatus[:active].each_pair do |jobID, theInfo|
+
+			if (theInfo[:grid] == theGrid)
+				# Calculate the time
+				timeStart = theInfo[:time_start];
+				timeEnd   = theInfo.fetch(:time_end, Time.now);
+
+				theTime = timeEnd - timeStart;
+				theTime = Time.at(theTime).utc.strftime("%H:%M:%S");
+
+
+
+				# Save the job
+				theInfo = theInfo.dup();
+
+				theInfo[:source] = Job.decodeID(jobID)[:src_host];
+				theInfo[:worker] = theNode.address;
+				theInfo[:time]   = theTime;
+
+				theJobs[jobID] = theInfo;
+			end
+
+		end
+	end
+
+	return(theJobs);
+
+end
+
+
+
+
+
+#============================================================================
 #		Status.showStatus : Show the status.
 #----------------------------------------------------------------------------
 def Status.showStatus(theGrid, theNodes)
 
 	# Get the state we need
+	theJobs = collectJobs(theGrid, theNodes);
 	theGrid = "ygrid" if (theGrid.empty?)
-	theJobs = Array.new();
-
-	theNodes.each do |theNode|
-		if (theNode.jobs != 0)
-
-			jobsStatus = Agent.callServer(theNode.address, "activeJobs");
-			jobsStatus.each_pair do |jobID, theInfo|
-			
-				theStatus          = theInfo.dup();
-				theStatus[:job]    = jobID;
-				theStatus[:source] = Job.decodeID(jobID)[:src_host];
-				theStatus[:worker] = theNode.address;
-				theStatus[:status] = theStatus["status"];
-
-				theJobs << theStatus;
-			end
-
-		end
-	end
 
 
 
@@ -231,8 +260,8 @@ def Status.showStatus(theGrid, theNodes)
 		theHeader = headerColumns(JOB_COLUMNS);
 		Utils.putHeader(theHeader, "-");
 	
-		theJobs.each do |theStatus|
-			puts jobRow(theStatus);
+		theJobs.each_pair do |jobID, theInfo|
+			puts jobRow(jobID, theInfo);
 		end
 
 		puts "";

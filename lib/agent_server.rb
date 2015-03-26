@@ -73,7 +73,7 @@ def initialize
 
 	# Initialise our state
 	Workspace.stateActiveJobs do |theState|
-		theState[:jobs] = Array.new();
+		theState[:jobs] = Hash.new();
 	end
 
 
@@ -150,9 +150,8 @@ def openJob(jobID)
 
 		if (didOpen)
 			FileUtils.mkdir_p(pathActive);
-			setJobStatus(jobID, Agent::PROGRESS_ACTIVE);
 
-			theState[:jobs] << jobID;
+			theState[:jobs][jobID] = nil;
 			Cluster.openedJob();
 		end
 	end
@@ -197,19 +196,17 @@ end
 def executeJob(jobID)
 
 	# Get the state we need
-	pathJob    = Workspace.pathActiveJob(jobID, Agent::JOB_FILE);
-	pathStdout = Workspace.pathActiveJob(jobID, Agent::JOB_STDOUT);
-	pathStderr = Workspace.pathActiveJob(jobID, Agent::JOB_STDERR);
-
-	theJob = Job.new(pathJob);
+	pathJob = Workspace.pathActiveJob(jobID, Agent::JOB_FILE);
+	theJob  = Job.new(pathJob);
 
 
 
 	# Execute the job
 	Thread.new do
-		`#{theJob.cmd_task} > "#{pathStdout}" 2> "#{pathStderr}"`;
+		beginJob( theJob);
+		invokeJob(theJob);
+		finishJob(theJob);
 
-		setJobStatus(jobID, Agent::PROGRESS_DONE);
 		Agent.callServer(theJob.src_host, "finishedJob", jobID);
 	end
 
@@ -260,29 +257,34 @@ end
 
 
 #==============================================================================
-#		AgentServer::activeJobs : Get the active jobs state.
+#		AgentServer::currentStatus : Get the server status.
 #------------------------------------------------------------------------------
-def activeJobs
+def currentStatus
 
 	# Get the state we need
-	jobsStatus = Hash.new();
+	theStatus  = Hash.new();
+	activeJobs = Hash.new();
 
 
 
-	# Get the state		
+	# Get the active jobs
 	Workspace.stateActiveJobs do |theState|
-		theState[:jobs].each do |jobID|
+		theState[:jobs].each_pair do |jobID, theInfo|
+			if (theInfo != nil)
+				theInfo          = theInfo.dup;
+				theInfo[:status] = getJobStatus(jobID);
 
-			theStatus          = Hash.new();
-			theStatus[:status] = getJobStatus(jobID);
-			theStatus[:start]  = Time.now();
-			
-			jobsStatus[jobID] = theStatus;
-
+				activeJobs[jobID] = theInfo;
+			end
 		end
 	end
 
-	return(jobsStatus);
+
+
+	# Get the status
+	theStatus[:active] = activeJobs;
+
+	return(theStatus);
 
 end
 
@@ -314,6 +316,69 @@ end
 
 
 #==============================================================================
+#		AgentServer::beginJob : Begin a job.
+#------------------------------------------------------------------------------
+def beginJob(theJob)
+
+	# Update our state
+	Workspace.stateActiveJobs do |theState|
+		theInfo              = Hash.new();
+		theInfo[:grid]       = theJob.grid;
+		theInfo[:time_start] = Time.now();
+
+		theState[:jobs][theJob.id] = theInfo;
+	end
+
+end
+
+
+
+
+
+#==============================================================================
+#		AgentServer::invokeJob : Invoke a job.
+#------------------------------------------------------------------------------
+def invokeJob(theJob)
+
+	# Get the state we need
+	pathStdout = Workspace.pathActiveJob(theJob.id, Agent::JOB_STDOUT);
+	pathStderr = Workspace.pathActiveJob(theJob.id, Agent::JOB_STDERR);
+
+
+
+	# Invoke the job
+	setJobStatus(theJob.id, Agent::PROGRESS_ACTIVE);
+
+	`#{theJob.cmd_task} > "#{pathStdout}" 2> "#{pathStderr}"`;
+
+	setJobStatus(theJob.id, Agent::PROGRESS_DONE);
+
+end
+
+
+
+
+
+#==============================================================================
+#		AgentServer::finishJob : Finish a job.
+#------------------------------------------------------------------------------
+def finishJob(theJob)
+
+	# Update our state
+	Workspace.stateActiveJobs do |theState|
+		theInfo            = theState[:jobs][theJob.id];
+		theInfo[:time_end] = Time.now();
+
+		theState[:jobs][theJob.id] = theInfo;
+	end
+
+end
+
+
+
+
+
+#==============================================================================
 #		AgentServer::getJobStatus : Get a JobStatus.
 #------------------------------------------------------------------------------
 def getJobStatus(jobID)
@@ -335,7 +400,6 @@ end
 def setJobStatus(jobID, theStatus)
 
 	pathStatus = Workspace.pathActiveJob(jobID, Agent::JOB_STATUS);
-
 	IO.write(pathStatus, theStatus);
 
 end

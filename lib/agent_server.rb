@@ -59,6 +59,9 @@ require_relative 'workspace';
 #------------------------------------------------------------------------------
 class AgentServer
 
+# Config
+MONITOR_SLEEP = 3.0;
+
 
 
 
@@ -68,8 +71,32 @@ class AgentServer
 #------------------------------------------------------------------------------
 def initialize
 
+	# Initialise our state
 	Workspace.stateActiveJobs do |theState|
 		theState[:jobs] = Array.new();
+	end
+
+
+
+	# Start the monitor
+	startMonitor();
+
+end
+
+
+
+
+
+#==============================================================================
+#		AgentServer::startMonitor : Start the monitor thread.
+#------------------------------------------------------------------------------
+def startMonitor
+
+	Thread.new do
+		loop do
+			Cluster.updateLoad();
+			sleep(MONITOR_SLEEP);
+		end
 	end
 
 end

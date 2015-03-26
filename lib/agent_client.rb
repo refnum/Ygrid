@@ -60,7 +60,7 @@ require_relative 'workspace';
 class AgentClient
 
 # Config
-QUEUE_POLL = 1.5;
+QUEUE_SLEEP = 1.5;
 
 
 
@@ -101,7 +101,7 @@ def waitForJobs
 		end
 
 		break if (!theJobs.empty?);
-		sleep(QUEUE_POLL);
+		sleep(QUEUE_SLEEP);
 	end
 
 	return(theJobs);

@@ -45,7 +45,6 @@
 #------------------------------------------------------------------------------
 require_relative 'agent';
 require_relative 'daemon';
-require_relative 'job_status';
 require_relative 'node';
 
 

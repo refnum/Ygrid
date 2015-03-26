@@ -45,7 +45,6 @@
 #------------------------------------------------------------------------------
 require 'fileutils';
 
-require_relative 'job_status';
 require_relative 'job';
 require_relative 'system';
 require_relative 'utils';
@@ -60,9 +59,6 @@ require_relative 'workspace';
 #------------------------------------------------------------------------------
 class AgentServer
 
-# Config
-MONITOR_POLL = 5;
-
 
 
 
@@ -72,15 +68,9 @@ MONITOR_POLL = 5;
 #------------------------------------------------------------------------------
 def initialize
 
-	# Initialise ourselves
 	Workspace.stateActiveJobs do |theState|
 		theState[:jobs] = Array.new();
 	end
-
-
-
-	# Start status updates
-	startStatusUpdates();
 
 end
 
@@ -133,16 +123,12 @@ def openJob(jobID)
 
 		if (didOpen)
 			FileUtils.mkdir_p(pathActive);
-			setJobStatus(jobID, JobStatus::ACTIVE);
+			setJobStatus(jobID, Agent::PROGRESS_ACTIVE);
 
 			theState[:jobs] << jobID;
+			Cluster.openedJob();
 		end
 	end
-
-
-
-	# Update our status
-	updateJobsStatus();
 
 	return(didOpen);
 
@@ -167,12 +153,8 @@ def closeJob(jobID)
 		FileUtils.rm_rf(pathActive);
 
 		theState[:jobs].delete(jobID);
+		Cluster.closedJob();
 	end
-
-
-
-	# Update our status
-	updateJobsStatus();
 
 	return(true);
 
@@ -200,9 +182,7 @@ def executeJob(jobID)
 	Thread.new do
 		`#{theJob.cmd_task} > "#{pathStdout}" 2> "#{pathStderr}"`;
 
-		setJobStatus(jobID, JobStatus::DONE);
-		updateJobsStatus();
-
+		setJobStatus(jobID, Agent::PROGRESS_DONE);
 		Agent.callServer(theJob.src_host, "finishedJob", jobID);
 	end
 
@@ -267,7 +247,7 @@ def activeJobs
 		theState[:jobs].each do |jobID|
 
 			theStatus          = Hash.new();
-			theStatus[:status] = getJobStatus(jobID).pretty_status;
+			theStatus[:status] = getJobStatus(jobID);
 			theStatus[:start]  = Time.now();
 			
 			jobsStatus[jobID] = theStatus;
@@ -307,55 +287,6 @@ end
 
 
 #==============================================================================
-#		AgentServer::startStatusUpdates : Start status updates.
-#------------------------------------------------------------------------------
-def startStatusUpdates
-
-	Thread.new do
-		loop do
-			updateJobsStatus();
-			sleep(MONITOR_POLL);
-		end
-	end
-
-end
-
-
-
-
-
-#==============================================================================
-#		AgentServer::updateJobsStatus : Update the jobs status.
-#------------------------------------------------------------------------------
-def updateJobsStatus
-
-	# Update the jobs status
-	#
-	# The status of jobs can be updated as a result of starting a job, executing
-	# a job, or from the status thread.
-	#
-	# As these all run on separate threads we use our transaction as a mutex to
-	# ensure only one thread updates the cluster at a time.
-	Workspace.stateActiveJobs do |theState|
-		# Collect the status
-		jobsStatus = [];
-
-		theState[:jobs].each do |jobID|
-			jobsStatus << getJobStatus(jobID);
-		end
-
-
-		# Update the cluster
-		Cluster.updateJobsStatus(jobsStatus);
-	end
-
-end
-
-
-
-
-
-#==============================================================================
 #		AgentServer::getJobStatus : Get a JobStatus.
 #------------------------------------------------------------------------------
 def getJobStatus(jobID)
@@ -363,7 +294,7 @@ def getJobStatus(jobID)
 	pathStatus = Workspace.pathActiveJob(jobID, Agent::JOB_STATUS);
 	theStatus  = Utils.atomicRead(pathStatus);
 
-	return(JobStatus.new(jobID, theStatus, System.address));
+	return(theStatus);
 
 end
 

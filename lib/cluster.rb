@@ -47,7 +47,6 @@ require 'json';
 
 require_relative 'agent';
 require_relative 'daemon';
-require_relative 'job_status';
 require_relative 'node';
 require_relative 'system';
 require_relative 'utils';
@@ -148,18 +147,30 @@ end
 
 
 #============================================================================
-#		Cluster.updateJobsStatus : Update the jobs status.
+#		Cluster.openedJob : A job has been opened.
 #----------------------------------------------------------------------------
-def Cluster.updateJobsStatus(jobsStatus)
+def Cluster.openedJob
 
-	# Update the status
-	theJobs = Array.new();
+	# Update the jobs
+	numJobs = getTag("jobs", "0").to_i + 1;
 
-	jobsStatus.each do |theStatus|
-		theJobs << theStatus.to_s;
-	end
+	setTag("jobs", numJobs.to_s);
 
-	setTag("jobs", theJobs.join(";"));
+end
+
+
+
+
+
+#============================================================================
+#		Cluster.closedJob : A job has been closed.
+#----------------------------------------------------------------------------
+def Cluster.closedJob
+
+	# Update the jobs
+	numJobs = getTag("jobs").to_i - 1;
+
+	setTag("jobs", numJobs.to_s);
 
 end
 
@@ -314,7 +325,7 @@ def Cluster.getMembers
 
 	# Get the members
 	#
-	# Only alive members with a matching version can be talked to.
+	# Only live members with a matching version can be talked to.
 	begin
 		theMembers = JSON.parse(`serf members -format=json -status alive -tag ver=#{Cluster::VERSION}`).fetch("members", {});
 

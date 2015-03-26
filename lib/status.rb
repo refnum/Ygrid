@@ -45,6 +45,7 @@
 #------------------------------------------------------------------------------
 require 'json';
 
+require_relative 'agent';
 require_relative 'job';
 require_relative 'node';
 require_relative 'utils';
@@ -113,7 +114,7 @@ def Status.nodeRow(theNode)
 	theColumns[:cpus] = theNode.cpus.to_s   + " x " + theNode.speed.to_s + "Ghz";
 	theColumns[:mem]  = theNode.memory.to_s + "GB";
 	theColumns[:load] = theNode.load;
-	theColumns[:jobs] = theNode.jobs.size;
+	theColumns[:jobs] = theNode.jobs;
 
 
 
@@ -146,7 +147,17 @@ def Status.jobRow(theStatus)
 	theColumns[:job]    = theStatus[:job];
 	theColumns[:source] = theStatus[:source];
 	theColumns[:worker] = theStatus[:worker];
-	theColumns[:status] = theStatus[:status];
+	
+	case theStatus[:status]
+		when Agent::PROGRESS_ACTIVE
+			theColumns[:status] = "Active";
+
+		when Agent::PROGRESS_DONE
+			theColumns[:status] = "Done";
+
+		else
+			theColumns[:status] = theStatus[:status] + "%";
+	end
 
 
 
@@ -178,7 +189,7 @@ def Status.showStatus(theGrid, theNodes)
 	theJobs = Array.new();
 
 	theNodes.each do |theNode|
-		if (theNode.jobs.size != 0)
+		if (theNode.jobs != 0)
 
 			jobsStatus = Agent.callServer(theNode.address, "activeJobs");
 			jobsStatus.each_pair do |jobID, theInfo|

@@ -189,18 +189,11 @@ end
 
 
 #==============================================================================
-#		Node::jobs : Get the jobs executing on the node.
+#		Node::jobs : Get the number of jobs on the node.
 #------------------------------------------------------------------------------
 def jobs
 
-	theJobs     = @tags.fetch("jobs", "").split(";");
-	jobsStatus = Array.new()
-
-	theJobs.each do |theState|
-		jobsStatus << JobStatus.from_s(theState, self.address);
-	end
-
-	return(jobsStatus);
+	return(@tags["jobs"].to_i);
 
 end
 

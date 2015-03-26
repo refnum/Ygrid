@@ -70,6 +70,10 @@ JOB_STDOUT = "stdout.txt";
 JOB_STDERR = "stderr.txt";
 JOB_STATUS = "status.txt";
 
+# Progress
+PROGRESS_ACTIVE = 'A';
+PROGRESS_DONE   = 'D';
+
 
 
 

@@ -63,6 +63,7 @@ PORT = 7948;
 
 
 # Config
+CONFIG_NORMAL  = "--archive --compress --recursive --delete"
 CONFIG_VERBOSE = "--verbose";
 
 CONFIG_FILE = <<CONFIG_FILE
@@ -218,8 +219,9 @@ def Syncer.transferFiles(theSrc, theDst, theFiles)
 	tmpFile = tmpFileList(theFiles);
 
 
+
 	# Transfer the files
-	`rsync -az --recursive #{CONFIG_VERBOSE} --files-from="#{tmpFile.path}" #{theSrc} #{theDst} >> "#{pathLog}" 2>&1`;
+	`rsync #{CONFIG_NORMAL} #{CONFIG_VERBOSE} --files-from="#{tmpFile.path}" #{theSrc} #{theDst} >> "#{pathLog}" 2>&1`;
 
 	tmpFile.unlink();
 

@@ -234,7 +234,8 @@ def finishedJob(jobID)
 
 
 		# Fetch the results
-		Syncer.fetchJob(theJob.host, jobID);
+		Syncer.fetchJob(  theJob.host, jobID);
+		Syncer.fetchFiles(theJob.host, theJob.task_outputs) if (!theJob.task_outputs.empty?);
 
 
 

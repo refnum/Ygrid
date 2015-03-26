@@ -361,6 +361,7 @@ def invokeJob(theJob)
 	theEnvironment["YGRID_JOB_GRID"]      = theJob.grid;
 	theEnvironment["YGRID_HOST_SRC"]      = theJob.src_host.to_s;
 	theEnvironment["YGRID_HOST_DST"]      = theJob.host.to_s;
+	theEnvironment["YGRID_PATH_ROOT"]     = Workspace.pathHost(theJob.src_host);
 	theEnvironment["YGRID_PATH_STDIN"]    = (theJob.task_stdin == nil) ? "/dev/null" : theJob.task_stdin;
 	theEnvironment["YGRID_PATH_STDOUT"]   = Workspace.pathActiveJob(jobID, Agent::JOB_STDOUT);
 	theEnvironment["YGRID_PATH_STDERR"]   = Workspace.pathActiveJob(jobID, Agent::JOB_STDERR);

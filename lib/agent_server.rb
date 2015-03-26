@@ -134,10 +134,11 @@ end
 #==============================================================================
 #		AgentServer::openJob : Attempt to open a job.
 #------------------------------------------------------------------------------
-def openJob(jobID)
+def openJob(jobID, srcAddress)
 
 	# Get the state we need
 	pathActive = Workspace.pathActiveJob(jobID);
+	pathHost   = Workspace.pathHost(srcAddress);
 	didOpen    = false;
 
 
@@ -150,6 +151,7 @@ def openJob(jobID)
 
 		if (didOpen)
 			FileUtils.mkdir_p(pathActive);
+			FileUtils.mkdir_p(pathHost);
 
 			theState[:jobs][jobID] = nil;
 			Cluster.openedJob();

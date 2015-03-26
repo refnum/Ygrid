@@ -186,7 +186,7 @@ def dispatchJobToNode(theJob, theNode)
 	# Open the job
 	puts "Attempting to dispatch job #{theJob.id} to #{theNode.address}";
 	
-	didOpen = Agent.callServer(theNode.address, "openJob", theJob.id);
+	didOpen = Agent.callServer(theNode.address, "openJob", theJob.id, System.address.to_s);
 
 	puts "  => #{theNode.address} #{didOpen ? 'accepted' : 'rejected'} job #{theJob.id}";
 

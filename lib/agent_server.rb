@@ -341,15 +341,26 @@ end
 def invokeJob(theJob)
 
 	# Get the state we need
-	pathStdout = Workspace.pathActiveJob(theJob.id, Agent::JOB_STDOUT);
-	pathStderr = Workspace.pathActiveJob(theJob.id, Agent::JOB_STDERR);
+	theOptions     = Hash.new();
+	theEnvironment = Hash.new();
+
+	theOptions[:chdir]           = "/tmp";
+	theOptions[:unsetenv_others] = true;
+	theOptions[STDIN]            = theJob.task_stdin if (theJob.task_stdin != nil && File.exists?(theJob.task_stdin));
+	theOptions[STDOUT]           = Workspace.pathActiveJob(theJob.id, Agent::JOB_STDOUT);
+	theOptions[STDERR]           = Workspace.pathActiveJob(theJob.id, Agent::JOB_STDERR);
+
+	theJob.task_environment.each_pair do |theKey, theValue|
+		theEnvironment[theKey.to_s] = theValue.to_s;
+	end
 
 
 
 	# Invoke the job
 	setJobStatus(theJob.id, Agent::PROGRESS_ACTIVE);
 
-	`#{theJob.cmd_task} > "#{pathStdout}" 2> "#{pathStderr}"`;
+	thePID = Process.spawn(theEnvironment, theJob.cmd_task, theOptions);
+	Process.wait(thePID);
 
 	setJobStatus(theJob.id, Agent::PROGRESS_DONE);
 

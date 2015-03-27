@@ -205,9 +205,9 @@ def executeJob(jobID)
 
 	# Execute the job
 	Thread.new do
-		beginJob( theJob);
-		invokeJob(theJob);
-		finishJob(theJob);
+		beginJobTask( theJob);
+		invokeJobTask(theJob);
+		finishJobTask(theJob);
 
 		Agent.callServer(theJob.src_host, "finishedJob", jobID);
 	end
@@ -319,9 +319,9 @@ end
 
 
 #==============================================================================
-#		AgentServer::beginJob : Begin a job.
+#		AgentServer::beginJobTask : Begin a job's task.
 #------------------------------------------------------------------------------
-def beginJob(theJob)
+def beginJobTask(theJob)
 
 	# Update our state
 	Workspace.stateActiveJobs do |theState|
@@ -339,9 +339,9 @@ end
 
 
 #==============================================================================
-#		AgentServer::invokeJob : Invoke a job.
+#		AgentServer::invokeJobTask : Invoke a job's task.
 #------------------------------------------------------------------------------
-def invokeJob(theJob)
+def invokeJobTask(theJob)
 
 	# Get the state we need
 	jobID = theJob.id;
@@ -394,9 +394,9 @@ end
 
 
 #==============================================================================
-#		AgentServer::finishJob : Finish a job.
+#		AgentServer::finishJobTask : Finish a job's task.
 #------------------------------------------------------------------------------
-def finishJob(theJob)
+def finishJobTask(theJob)
 
 	# Update our state
 	Workspace.stateActiveJobs do |theState|

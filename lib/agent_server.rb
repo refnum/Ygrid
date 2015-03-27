@@ -247,7 +247,9 @@ def finishedJob(jobID)
 
 
 		# Execute the done hook
-		puts "TODO: invoke cmd_done hook"
+		if (!theJob.cmd_done.empty?)
+			invokeJobDone(theJob);
+		end
 
 	end
 
@@ -405,6 +407,54 @@ def finishJobTask(theJob)
 
 		theState[:jobs][theJob.id] = theInfo;
 	end
+
+end
+
+
+
+
+
+#==============================================================================
+#		AgentServer::invokeJobDone : Invoke a job's done command.
+#------------------------------------------------------------------------------
+def invokeJobDone(theJob)
+
+	# Get the state we need
+	jobID = theJob.id;
+
+	theEnvironment = Hash.new();
+	theOptions     = Hash.new();
+
+
+
+	# Build the environment
+	#
+	# All environment keys and values must be converted to strings.
+	theJob.task_environment.each_pair do |theKey, theValue|
+		theEnvironment[theKey.to_s] = theValue.to_s;
+	end
+
+	theEnvironment["YGRID_JOB_ID"]      = jobID;
+	theEnvironment["YGRID_JOB_GRID"]    = theJob.grid;
+	theEnvironment["YGRID_HOST_SRC"]    = theJob.src_host.to_s;
+	theEnvironment["YGRID_HOST_DST"]    = theJob.host.to_s;
+	theEnvironment["YGRID_PATH_STDOUT"] = Workspace.pathCompletedJob(jobID, Agent::JOB_STDOUT);
+	theEnvironment["YGRID_PATH_STDERR"] = Workspace.pathCompletedJob(jobID, Agent::JOB_STDERR);
+
+
+
+	# Build the options
+	theOptions[:chdir]           = "/tmp";
+	theOptions[:unsetenv_others] = true;
+	theOptions[:in]              = theEnvironment["YGRID_PATH_STDOUT"];
+	theOptions[:out]             = "/dev/null";
+	theOptions[:err]             = "/dev/null";
+
+
+
+	# Invoke the command
+	thePID = Process.spawn(theEnvironment, theJob.cmd_done, theOptions);
+	Process.wait(thePID);
 
 end
 

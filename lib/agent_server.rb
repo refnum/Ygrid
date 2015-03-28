@@ -346,48 +346,18 @@ end
 def invokeJobTask(theJob)
 
 	# Get the state we need
-	jobID = theJob.id;
-
-	theEnvironment = Hash.new();
-	theOptions     = Hash.new();
-
-
-
-	# Build the environment
-	#
-	# All environment keys and values must be converted to strings.
-	theJob.task_environment.each_pair do |theKey, theValue|
-		theEnvironment[theKey.to_s] = theValue.to_s;
-	end
-
-	theEnvironment["YGRID_JOB_ID"]        = jobID;
-	theEnvironment["YGRID_JOB_GRID"]      = theJob.grid;
-	theEnvironment["YGRID_HOST_SRC"]      = theJob.src_host.to_s;
-	theEnvironment["YGRID_HOST_DST"]      = theJob.host.to_s;
-	theEnvironment["YGRID_PATH_ROOT"]     = Workspace.pathHost(theJob.src_host);
-	theEnvironment["YGRID_PATH_STDIN"]    = (theJob.task_stdin == nil) ? "/dev/null" : theJob.task_stdin;
-	theEnvironment["YGRID_PATH_STDOUT"]   = Workspace.pathActiveJob(jobID, Agent::JOB_STDOUT);
-	theEnvironment["YGRID_PATH_STDERR"]   = Workspace.pathActiveJob(jobID, Agent::JOB_STDERR);
-	theEnvironment["YGRID_PATH_PROGRESS"] = Workspace.pathActiveJob(jobID, Agent::JOB_STATUS);
-
-
-
-	# Build the options
-	theOptions[:chdir]           = "/tmp";
-	theOptions[:unsetenv_others] = true;
-	theOptions[:in]              = theEnvironment["YGRID_PATH_STDIN"];
-	theOptions[:out]             = theEnvironment["YGRID_PATH_STDOUT"];
-	theOptions[:err]             = theEnvironment["YGRID_PATH_STDERR"];
+	theEnvironment = getCmdEnvironment(theJob, Workspace.pathActiveJob(theJob.jobID));
+	theOptions     = getCmdOptions(    theEnvironment);
 
 
 
 	# Invoke the job
-	setJobStatus(jobID, Agent::PROGRESS_ACTIVE);
+	setJobStatus(theJob.id, Agent::PROGRESS_ACTIVE);
 
 	thePID = Process.spawn(theEnvironment, theJob.cmd_task, theOptions);
 	Process.wait(thePID);
 
-	setJobStatus(jobID, Agent::PROGRESS_DONE);
+	setJobStatus(theJob.id, Agent::PROGRESS_DONE);
 
 end
 
@@ -420,35 +390,16 @@ end
 def invokeJobDone(theJob)
 
 	# Get the state we need
-	jobID = theJob.id;
+	theEnvironment = getCmdEnvironment(theJob, Workspace.pathCompletedJob(theJob.jobID));
+	theOptions     = getCmdOptions(    theEnvironment);
 
-	theEnvironment = Hash.new();
-	theOptions     = Hash.new();
+	theEnvironment.delete("YGRID_ROOT");
+	theEnvironment.delete("YGRID_STDIN");
+	theEnvironment.delete("YGRID_PROGRESS");
 
-
-
-	# Build the environment
-	#
-	# All environment keys and values must be converted to strings.
-	theJob.task_environment.each_pair do |theKey, theValue|
-		theEnvironment[theKey.to_s] = theValue.to_s;
-	end
-
-	theEnvironment["YGRID_JOB_ID"]      = jobID;
-	theEnvironment["YGRID_JOB_GRID"]    = theJob.grid;
-	theEnvironment["YGRID_HOST_SRC"]    = theJob.src_host.to_s;
-	theEnvironment["YGRID_HOST_DST"]    = theJob.host.to_s;
-	theEnvironment["YGRID_PATH_STDOUT"] = Workspace.pathCompletedJob(jobID, Agent::JOB_STDOUT);
-	theEnvironment["YGRID_PATH_STDERR"] = Workspace.pathCompletedJob(jobID, Agent::JOB_STDERR);
-
-
-
-	# Build the options
-	theOptions[:chdir]           = "/tmp";
-	theOptions[:unsetenv_others] = true;
-	theOptions[:in]              = theEnvironment["YGRID_PATH_STDOUT"];
-	theOptions[:out]             = "/dev/null";
-	theOptions[:err]             = "/dev/null";
+	theOptions[:in]  = theEnvironment["YGRID_PATH_STDOUT"];
+	theOptions[:out] = "/dev/null";
+	theOptions[:err] = "/dev/null";
 
 
 
@@ -463,7 +414,64 @@ end
 
 
 #==============================================================================
-#		AgentServer::getJobStatus : Get a JobStatus.
+#		AgentServer::getCmdEnvironment : Get a command's environment.
+#------------------------------------------------------------------------------
+def getCmdEnvironment(theJob, pathJob)
+
+	# Get the job's environment
+	#
+	# All environment keys and values must be converted to strings.
+	theEnvironment = Hash.new();
+
+	theJob.task_environment.each_pair do |theKey, theValue|
+		theEnvironment[theKey.to_s] = theValue.to_s;
+	end
+
+
+
+	# Add the standard values
+	theEnvironment["YGRID_ID"]       = theJob.id;
+	theEnvironment["YGRID_GRID"]     = theJob.grid;
+	theEnvironment["YGRID_HOST_SRC"] = theJob.src_host.to_s;
+	theEnvironment["YGRID_HOST_DST"] = theJob.host.to_s;
+	theEnvironment["YGRID_ROOT"]     = Workspace.pathHost(theJob.src_host);
+	theEnvironment["YGRID_STDIN"]    = (theJob.task_stdin == nil) ? "/dev/null" : theJob.task_stdin;
+	theEnvironment["YGRID_STDOUT"]   = pathJob + "/" + Agent::JOB_STDOUT;
+	theEnvironment["YGRID_STDERR"]   = pathJob + "/" + Agent::JOB_STDERR;
+	theEnvironment["YGRID_PROGRESS"] = pathJob + "/" + Agent::JOB_STATUS;
+
+	return(theEnvironment);
+
+end
+
+
+
+
+
+#==============================================================================
+#		AgentServer::getCmdOptions : Get a command's options.
+#------------------------------------------------------------------------------
+def getCmdOptions(theEnvironment)
+
+	# Get the options
+	theOptions = Hash.new();
+
+	theOptions[:chdir]           = "/tmp";
+	theOptions[:unsetenv_others] = true;
+	theOptions[:in]              = theEnvironment["YGRID_PATH_STDIN"];
+	theOptions[:out]             = theEnvironment["YGRID_PATH_STDOUT"];
+	theOptions[:err]             = theEnvironment["YGRID_PATH_STDERR"];
+
+	return(theOptions);
+
+end
+
+
+
+
+
+#==============================================================================
+#		AgentServer::getJobStatus : Get a job's status.
 #------------------------------------------------------------------------------
 def getJobStatus(jobID)
 

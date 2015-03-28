@@ -395,7 +395,7 @@ def invokeJobDone(theJob)
 
 	theEnvironment.delete("YGRID_ROOT");
 	theEnvironment.delete("YGRID_STDIN");
-	theEnvironment.delete("YGRID_PROGRESS");
+	theEnvironment.delete("YGRID_STATUS");
 
 	theOptions[:in]  = theEnvironment["YGRID_PATH_STDOUT"];
 	theOptions[:out] = "/dev/null";
@@ -438,7 +438,7 @@ def getCmdEnvironment(theJob, pathJob)
 	theEnvironment["YGRID_STDIN"]    = (theJob.task_stdin == nil) ? "/dev/null" : theJob.task_stdin;
 	theEnvironment["YGRID_STDOUT"]   = pathJob + "/" + Agent::JOB_STDOUT;
 	theEnvironment["YGRID_STDERR"]   = pathJob + "/" + Agent::JOB_STDERR;
-	theEnvironment["YGRID_PROGRESS"] = pathJob + "/" + Agent::JOB_STATUS;
+	theEnvironment["YGRID_STATUS"]   = pathJob + "/" + Agent::JOB_STATUS;
 
 	return(theEnvironment);
 

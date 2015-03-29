@@ -250,6 +250,7 @@ def nodesForJob(theJob)
 
 	# Get the state we need
 	theNodes     = Cluster.nodes(theJob.grid);
+	theWeights   = theJob.weights;
 	localAddress = System.address;
 
 	maxPower  = 0.0;
@@ -270,8 +271,8 @@ def nodesForJob(theJob)
 	# The node's CPU power/memory are normalised to the upper bounds of the
 	# available nodes, then weighted by the job's priorities to give a score.
 	theNodes.sort! do |nodeA, nodeB|
-		scoreA = nodeScoreForJob(theJob, nodeA, localAddress, maxPower, maxMemory);
-		scoreB = nodeScoreForJob(theJob, nodeB, localAddress, maxPower, maxMemory);
+		scoreA = nodeScore(nodeA, theWeights, localAddress, maxPower, maxMemory);
+		scoreB = nodeScore(nodeB, theWeights, localAddress, maxPower, maxMemory);
 		scoreA <=> scoreB;
 	end
 
@@ -284,17 +285,17 @@ end
 
 
 #============================================================================
-#		AgentClient::nodeScoreForJob : Get a node's score for a job.
+#		AgentClient::nodeScore : Get a node's score.
 #----------------------------------------------------------------------------
-def nodeScoreForJob(theJob, theNode, localAddress, maxPower, maxMemory)
+def nodeScore(theNode, theWeights, localAddress, maxPower, maxMemory)
 
 	normalLocal  = (theNode.address == localAddress) ? 1 : 0;
 	normalPower  = theNode.power  / maxPower;
 	normalMemory = theNode.memory / maxMemory;
 
-	scoreLocal  = normalLocal  * theJob.weight_local;
-	scorePower  = normalPower  * theJob.weight_cpu;
-	scoreMemory = normalMemory * theJob.weight_mem;
+	scoreLocal  = normalLocal  * theWeights[:local];
+	scorePower  = normalPower  * theWeights[:cpu];
+	scoreMemory = normalMemory * theWeights[:memory];
 	
 	return(scoreLocal + scorePower + scoreMemory);
 

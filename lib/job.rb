@@ -68,9 +68,7 @@ attr_accessor :task_stdin
 attr_accessor :task_inputs
 attr_accessor :task_outputs
 attr_accessor :task_environment
-attr_accessor :weight_local
-attr_accessor :weight_cpu
-attr_accessor :weight_mem
+attr_accessor :weights
 
 
 # Defaults
@@ -84,9 +82,7 @@ DEFAULT_TASK_STDIN       = nil;
 DEFAULT_TASK_INPUTS		 = [];
 DEFAULT_TASK_OUTPUTS	 = [];
 DEFAULT_TASK_ENVIRONMENT = {};
-DEFAULT_WEIGHT_LOCAL	 = 10.0;
-DEFAULT_WEIGHT_CPU		 = 1.0;
-DEFAULT_WEIGHT_MEM		 = 1.0;
+DEFAULT_WEIGHTS			 = { :local => 10.0, :cpu => 1.0, :memory => 1.0 };
 
 
 
@@ -144,9 +140,7 @@ def load(thePath)
 	@task_inputs		= theInfo.fetch(:task_inputs,		DEFAULT_TASK_INPUTS);
 	@task_outputs		= theInfo.fetch(:task_outputs,		DEFAULT_TASK_OUTPUTS);
 	@task_environment	= theInfo.fetch(:task_environment,	DEFAULT_TASK_ENVIRONMENT);
-	@weight_local		= theInfo.fetch(:weight_local,		DEFAULT_WEIGHT_LOCAL);
-	@weight_cpu			= theInfo.fetch(:weight_cpu,		DEFAULT_WEIGHT_CPU);
-	@weight_mem			= theInfo.fetch(:weight_mem,		DEFAULT_WEIGHT_MEM);
+	@weights			= DEFAULT_WEIGHTS.merge(theInfo.fetch(:weights, {}));
 
 
 
@@ -166,7 +160,7 @@ end
 def save(theFile)
 
 	# Save the job
-	theInfo = Hash.new();
+	theInfo = { :weights => {} };
 
 	theInfo[:grid]				= @grid					if (@grid				!= DEFAULT_GRID);
 	theInfo[:host]				= @host					if (@host				!= DEFAULT_HOST);
@@ -178,9 +172,9 @@ def save(theFile)
 	theInfo[:task_inputs]		= @task_inputs			if (@task_inputs		!= DEFAULT_TASK_INPUTS);
 	theInfo[:task_outputs]		= @task_outputs			if (@task_outputs		!= DEFAULT_TASK_OUTPUTS);
 	theInfo[:task_environment]	= @task_environment		if (@task_environment	!= DEFAULT_TASK_ENVIRONMENT);
-	theInfo[:weight_local]		= @weight_local			if (@weight_local		!= DEFAULT_WEIGHT_LOCAL);
-	theInfo[:weight_cpu]		= @weight_cpu			if (@weight_cpu			!= DEFAULT_WEIGHT_CPU);
-	theInfo[:weight_mem]		= @weight_mem			if (@weight_mem			!= DEFAULT_WEIGHT_MEM);
+	theInfo[:weights][:local]	= @weights[:local]		if (@weights[:local]	!= DEFAULT_WEIGHTS[:local]);
+	theInfo[:weights][:cpu]		= @weights[:cpu]		if (@weights[:cpu]		!= DEFAULT_WEIGHTS[:cpu]);
+	theInfo[:weights][:memory]	= @weights[:memory]		if (@weights[:memory]	!= DEFAULT_WEIGHTS[:memory]);
 
 	Utils.atomicWrite(theFile, JSON.pretty_generate(theInfo) + "\n");
 

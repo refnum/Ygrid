@@ -201,14 +201,37 @@ def executeJob(jobID)
 	pathJob = Workspace.pathActiveJob(jobID, Agent::JOB_FILE);
 	theJob  = Job.new(pathJob);
 
+	theInfo              = Hash.new();
+	theInfo[:grid]       = theJob.grid;
+	theInfo[:time_start] = Time.now();
+
 
 
 	# Execute the job
 	Thread.new do
-		beginJobTask( theJob);
-		invokeJobTask(theJob);
-		finishJobTask(theJob);
+		# Update our state
+		setCmdState(:task, theJob.id, Agent::JOB_STATUS, Agent::PROGRESS_ACTIVE);
+		setCmdState(:task, theJob.id, Agent::JOB_RESULT, 0);
 
+		Workspace.stateActiveJobs do |theState|
+			theState[:jobs][theJob.id] = theInfo;
+		end
+
+
+		# Invoke the job
+		sysErr = invokeJobCmd(theJob, :task);
+
+
+		# Update our state
+		setCmdState(:task, theJob.id, Agent::JOB_RESULT, sysErr);
+		setCmdState(:task, theJob.id, Agent::JOB_STATUS, Agent::PROGRESS_DONE);
+
+		Workspace.stateActiveJobs do |theState|
+			theState[:jobs][theJob.id][:time_end] = Time.now();
+		end
+
+
+		# Inform the source
 		Agent.callServer(theJob.src_host, "finishedJob", jobID);
 	end
 
@@ -232,11 +255,9 @@ def finishedJob(jobID)
 		theJob     = Job.new(pathOpened);
 
 
-
 		# Fetch the results
 		Syncer.fetchJob(  theJob.host, jobID);
 		Syncer.fetchFiles(theJob.host, theJob.task_outputs) if (!theJob.task_outputs.empty?);
-
 
 
 		# Close the job
@@ -245,12 +266,8 @@ def finishedJob(jobID)
 		Agent.callServer(theJob.host, "closeJob", jobID);
 
 
-
 		# Execute the done hook
-		if (!theJob.cmd_done.empty?)
-			invokeJobDone(theJob);
-		end
-
+		invokeJobCmd(theJob, :done) if (!theJob.cmd_done.empty?);
 	end
 
 	return(true);
@@ -313,77 +330,6 @@ def nextJobIndex
 	end
 
 	return(nextIndex);
-
-end
-
-
-
-
-
-#==============================================================================
-#		AgentServer::beginJobTask : Begin a job's task.
-#------------------------------------------------------------------------------
-def beginJobTask(theJob)
-
-	# Update our state
-	Workspace.stateActiveJobs do |theState|
-		theInfo              = Hash.new();
-		theInfo[:grid]       = theJob.grid;
-		theInfo[:time_start] = Time.now();
-
-		theState[:jobs][theJob.id] = theInfo;
-	end
-
-end
-
-
-
-
-
-#==============================================================================
-#		AgentServer::invokeJobTask : Invoke a job's task.
-#------------------------------------------------------------------------------
-def invokeJobTask(theJob)
-
-	setCmdState(:task, theJob.id, Agent::JOB_STATUS, Agent::PROGRESS_ACTIVE);
-	setCmdState(:task, theJob.id, Agent::JOB_RESULT, 0);
-
-	sysErr = invokeJobCmd(theJob, :task);
-
-	setCmdState(:task, theJob.id, Agent::JOB_RESULT, sysErr);
-	setCmdState(:task, theJob.id, Agent::JOB_STATUS, Agent::PROGRESS_DONE);
-
-end
-
-
-
-
-
-#==============================================================================
-#		AgentServer::finishJobTask : Finish a job's task.
-#------------------------------------------------------------------------------
-def finishJobTask(theJob)
-
-	# Update our state
-	Workspace.stateActiveJobs do |theState|
-		theInfo            = theState[:jobs][theJob.id];
-		theInfo[:time_end] = Time.now();
-
-		theState[:jobs][theJob.id] = theInfo;
-	end
-
-end
-
-
-
-
-
-#==============================================================================
-#		AgentServer::invokeJobDone : Invoke a job's done command.
-#------------------------------------------------------------------------------
-def invokeJobDone(theJob)
-
-	invokeJobCmd(theJob, :done);
 
 end
 

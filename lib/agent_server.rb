@@ -346,12 +346,12 @@ end
 def invokeJobTask(theJob)
 
 	# Get the state we need
-	theEnvironment = getCmdEnvironment(theJob, Workspace.pathActiveJob(theJob.jobID));
-	theOptions     = getCmdOptions(    theEnvironment);
+	theEnvironment = getCmdEnvironment(:task, theJob);
+	theOptions     = getCmdOptions(    :task, theEnvironment);
 
 
 
-	# Invoke the job
+	# Invoke the command
 	setCmdState(:task, jobID, Agent::JOB_STATUS, Agent::PROGRESS_ACTIVE)
 
 	thePID = Process.spawn(theEnvironment, theJob.cmd_task, theOptions);
@@ -390,16 +390,8 @@ end
 def invokeJobDone(theJob)
 
 	# Get the state we need
-	theEnvironment = getCmdEnvironment(theJob, Workspace.pathCompletedJob(theJob.jobID));
-	theOptions     = getCmdOptions(    theEnvironment);
-
-	theEnvironment.delete("YGRID_ROOT");
-	theEnvironment.delete("YGRID_STDIN");
-	theEnvironment.delete("YGRID_STATUS");
-
-	theOptions[:in]  = theEnvironment["YGRID_PATH_STDOUT"];
-	theOptions[:out] = "/dev/null";
-	theOptions[:err] = "/dev/null";
+	theEnvironment = getCmdEnvironment(:done, theJob);
+	theOptions     = getCmdOptions(    :done, theEnvironment);
 
 
 
@@ -416,9 +408,9 @@ end
 #==============================================================================
 #		AgentServer::getCmdEnvironment : Get a command's environment.
 #------------------------------------------------------------------------------
-def getCmdEnvironment(theJob, pathJob)
+def getCmdEnvironment(theCmd, theJob)
 
-	# Get the job's environment
+	# Get the job environment
 	#
 	# All environment keys and values must be converted to strings.
 	theEnvironment = Hash.new();
@@ -429,16 +421,27 @@ def getCmdEnvironment(theJob, pathJob)
 
 
 
-	# Add the standard values
+	# Add the common values
 	theEnvironment["YGRID_ID"]       = theJob.id;
 	theEnvironment["YGRID_GRID"]     = theJob.grid;
 	theEnvironment["YGRID_HOST_SRC"] = theJob.src_host.to_s;
 	theEnvironment["YGRID_HOST_DST"] = theJob.host.to_s;
-	theEnvironment["YGRID_ROOT"]     = Workspace.pathHost(theJob.src_host);
-	theEnvironment["YGRID_STDIN"]    = (theJob.task_stdin == nil) ? "/dev/null" : theJob.task_stdin;
-	theEnvironment["YGRID_STDOUT"]   = pathJob + "/" + Agent::JOB_STDOUT;
-	theEnvironment["YGRID_STDERR"]   = pathJob + "/" + Agent::JOB_STDERR;
-	theEnvironment["YGRID_STATUS"]   = pathJob + "/" + Agent::JOB_STATUS;
+
+
+
+	# Add the cmd-specific values
+	case theCmd
+		when :task
+			theEnvironment["YGRID_ROOT"]   = Workspace.pathHost(theJob.src_host);
+			theEnvironment["YGRID_STDIN"]  = (theJob.task_stdin == nil) ? "/dev/null" : theJob.task_stdin;
+			theEnvironment["YGRID_STDOUT"] = Workspace.pathActiveJob(theJob.jobID, Agent::JOB_STDOUT);
+			theEnvironment["YGRID_STDERR"] = Workspace.pathActiveJob(theJob.jobID, Agent::JOB_STDERR);
+			theEnvironment["YGRID_STATUS"] = Workspace.pathActiveJob(theJob.jobID, Agent::JOB_STATUS);
+
+		when :done
+			theEnvironment["YGRID_STDOUT"] = Workspace.pathCompletedJob(theJob.jobID, Agent::JOB_STDOUT);
+			theEnvironment["YGRID_STDERR"] = Workspace.pathCompletedJob(theJob.jobID, Agent::JOB_STDERR);
+	end
 
 	return(theEnvironment);
 
@@ -451,16 +454,28 @@ end
 #==============================================================================
 #		AgentServer::getCmdOptions : Get a command's options.
 #------------------------------------------------------------------------------
-def getCmdOptions(theEnvironment)
+def getCmdOptions(theCmd, theEnvironment)
 
-	# Get the options
+	# Get the common options
 	theOptions = Hash.new();
 
 	theOptions[:chdir]           = "/tmp";
 	theOptions[:unsetenv_others] = true;
-	theOptions[:in]              = theEnvironment["YGRID_PATH_STDIN"];
-	theOptions[:out]             = theEnvironment["YGRID_PATH_STDOUT"];
-	theOptions[:err]             = theEnvironment["YGRID_PATH_STDERR"];
+
+
+
+	# Add the cmd-specific options
+	case theCmd
+		when :task
+			theOptions[:in]  = theEnvironment["YGRID_PATH_STDIN"];
+			theOptions[:out] = theEnvironment["YGRID_PATH_STDOUT"];
+			theOptions[:err] = theEnvironment["YGRID_PATH_STDERR"];
+
+		when :done
+			theOptions[:in]  = theEnvironment["YGRID_PATH_STDOUT"];
+			theOptions[:out] = "/dev/null";
+			theOptions[:err] = "/dev/null";
+	end
 
 	return(theOptions);
 

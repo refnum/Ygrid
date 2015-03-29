@@ -345,19 +345,9 @@ end
 #------------------------------------------------------------------------------
 def invokeJobTask(theJob)
 
-	# Get the state we need
-	theEnvironment = getCmdEnvironment(:task, theJob);
-	theOptions     = getCmdOptions(    :task, theEnvironment);
-
-
-
-	# Invoke the command
-	setCmdState(:task, jobID, Agent::JOB_STATUS, Agent::PROGRESS_ACTIVE)
-
-	thePID = Process.spawn(theEnvironment, theJob.cmd_task, theOptions);
-	Process.wait(thePID);
-
-	setCmdState(:task, jobID, Agent::JOB_STATUS, Agent::PROGRESS_DONE)
+	setCmdState( :task, theJob.id, Agent::JOB_STATUS, Agent::PROGRESS_ACTIVE)
+	invokeJobCmd(:task, theJob);
+	setCmdState( :task, theJob.id, Agent::JOB_STATUS, Agent::PROGRESS_DONE)
 
 end
 
@@ -389,14 +379,27 @@ end
 #------------------------------------------------------------------------------
 def invokeJobDone(theJob)
 
-	# Get the state we need
-	theEnvironment = getCmdEnvironment(:done, theJob);
-	theOptions     = getCmdOptions(    :done, theEnvironment);
+	invokeJobCmd(:done, theJob);
 
+end
+
+
+
+
+
+#==============================================================================
+#		AgentServer::invokeJobCmd : Invoke a job command.
+#------------------------------------------------------------------------------
+def invokeJobCmd(theCmd, theJob)
+
+	# Get the state we need
+	theEnvironment = getCmdEnvironment(theCmd, theJob);
+	theOptions     = getCmdOptions(    theCmd, theEnvironment);
+	cmdLine        = (theCmd == :task) ? theJob.cmd_task : theJob.cmd_done;
 
 
 	# Invoke the command
-	thePID = Process.spawn(theEnvironment, theJob.cmd_done, theOptions);
+	thePID = Process.spawn(theEnvironment, cmdLine, theOptions);
 	Process.wait(thePID);
 
 end

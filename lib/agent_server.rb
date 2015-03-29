@@ -345,9 +345,13 @@ end
 #------------------------------------------------------------------------------
 def invokeJobTask(theJob)
 
-	setCmdState( :task, theJob.id, Agent::JOB_STATUS, Agent::PROGRESS_ACTIVE)
-	invokeJobCmd(:task, theJob);
-	setCmdState( :task, theJob.id, Agent::JOB_STATUS, Agent::PROGRESS_DONE)
+	setCmdState(:task, theJob.id, Agent::JOB_STATUS, Agent::PROGRESS_ACTIVE);
+	setCmdState(:task, theJob.id, Agent::JOB_RESULT, 0);
+
+	sysErr = invokeJobCmd(:task, theJob);
+
+	setCmdState(:task, theJob.id, Agent::JOB_RESULT, sysErr);
+	setCmdState(:task, theJob.id, Agent::JOB_STATUS, Agent::PROGRESS_DONE);
 
 end
 
@@ -401,6 +405,8 @@ def invokeJobCmd(theCmd, theJob)
 	# Invoke the command
 	thePID = Process.spawn(theEnvironment, cmdLine, theOptions);
 	Process.wait(thePID);
+	
+	return($?.exitstatus);
 
 end
 
@@ -444,6 +450,7 @@ def getCmdEnvironment(theCmd, theJob)
 		when :done
 			theEnvironment["YGRID_STDOUT"] = Workspace.pathCompletedJob(theJob.jobID, Agent::JOB_STDOUT);
 			theEnvironment["YGRID_STDERR"] = Workspace.pathCompletedJob(theJob.jobID, Agent::JOB_STDERR);
+			theEnvironment["YGRID_RESULT"] = getCmdState(theCmd,        theJob.jobID, Agent::JOB_RESULT);
 	end
 
 	return(theEnvironment);

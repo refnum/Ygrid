@@ -69,6 +69,7 @@ JOB_FILE   = "job.json";
 JOB_STDOUT = "stdout.txt";
 JOB_STDERR = "stderr.txt";
 JOB_STATUS = "status.txt";
+JOB_RESULT = "result.txt";
 
 # Progress
 PROGRESS_ACTIVE = 'A';

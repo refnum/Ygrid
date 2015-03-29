@@ -348,7 +348,7 @@ def invokeJobTask(theJob)
 	setCmdState(:task, theJob.id, Agent::JOB_STATUS, Agent::PROGRESS_ACTIVE);
 	setCmdState(:task, theJob.id, Agent::JOB_RESULT, 0);
 
-	sysErr = invokeJobCmd(:task, theJob);
+	sysErr = invokeJobCmd(theJob, :task);
 
 	setCmdState(:task, theJob.id, Agent::JOB_RESULT, sysErr);
 	setCmdState(:task, theJob.id, Agent::JOB_STATUS, Agent::PROGRESS_DONE);
@@ -383,7 +383,7 @@ end
 #------------------------------------------------------------------------------
 def invokeJobDone(theJob)
 
-	invokeJobCmd(:done, theJob);
+	invokeJobCmd(theJob, :done);
 
 end
 
@@ -394,7 +394,7 @@ end
 #==============================================================================
 #		AgentServer::invokeJobCmd : Invoke a job command.
 #------------------------------------------------------------------------------
-def invokeJobCmd(theCmd, theJob)
+def invokeJobCmd(theJob, theCmd)
 
 	# Get the state we need
 	theEnvironment = getCmdEnvironment(theCmd, theJob);

@@ -277,7 +277,7 @@ def currentStatus
 		theState[:jobs].each_pair do |jobID, theInfo|
 			if (theInfo != nil)
 				theInfo          = theInfo.dup;
-				theInfo[:status] = getJobStatus(jobID);
+				theInfo[:status] = getCmdState(:task, jobID, Agent::JOB_STATUS);
 
 				activeJobs[jobID] = theInfo;
 			end
@@ -352,12 +352,12 @@ def invokeJobTask(theJob)
 
 
 	# Invoke the job
-	setJobStatus(theJob.id, Agent::PROGRESS_ACTIVE);
+	setCmdState(:task, jobID, Agent::JOB_STATUS, Agent::PROGRESS_ACTIVE)
 
 	thePID = Process.spawn(theEnvironment, theJob.cmd_task, theOptions);
 	Process.wait(thePID);
 
-	setJobStatus(theJob.id, Agent::PROGRESS_DONE);
+	setCmdState(:task, jobID, Agent::JOB_STATUS, Agent::PROGRESS_DONE)
 
 end
 
@@ -471,14 +471,14 @@ end
 
 
 #==============================================================================
-#		AgentServer::getJobStatus : Get a job's status.
+#		AgentServer::getCmdState : Get a command's state file.
 #------------------------------------------------------------------------------
-def getJobStatus(jobID)
+def getCmdState(theCmd, jobID, fileName)
 
-	pathStatus = Workspace.pathActiveJob(jobID, Agent::JOB_STATUS);
-	theStatus  = Utils.atomicRead(pathStatus);
+	theFile = (theCmd == :task)	? Workspace.pathActiveJob(   jobID, fileName)
+								: Workspace.pathCompletedJob(jobID, fileName);
 
-	return(theStatus);
+	return(Utils.atomicRead(theFile));
 
 end
 
@@ -487,12 +487,14 @@ end
 
 
 #==============================================================================
-#		AgentServer::setJobStatus : Set a job's status.
+#		AgentServer::setJobState : Set a job state value.
 #------------------------------------------------------------------------------
-def setJobStatus(jobID, theStatus)
+def setJobState(theCmd, jobID, fileName, theValue)
 
-	pathStatus = Workspace.pathActiveJob(jobID, Agent::JOB_STATUS);
-	IO.write(pathStatus, theStatus);
+	theFile = (theCmd == :task)	? Workspace.pathActiveJob(   jobID, fileName)
+								: Workspace.pathCompletedJob(jobID, fileName);
+
+	IO.write(theFile, theValue);
 
 end
 

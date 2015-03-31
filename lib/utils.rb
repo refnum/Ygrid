@@ -264,6 +264,22 @@ end
 
 
 #============================================================================
+#		Utils.fatalError : Fail with an error.
+#----------------------------------------------------------------------------
+def Utils.fatalError(theError, &theBlock)
+
+	puts "Fatal error: #{theError}";
+	yield if block_given?;
+
+	exit(-1);
+
+end
+
+
+
+
+
+#============================================================================
 #		Utils.atomicRead : Read a file atomically.
 #----------------------------------------------------------------------------
 def Utils.atomicRead(theFile)

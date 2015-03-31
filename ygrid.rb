@@ -140,15 +140,39 @@ end
 def cmdSubmit(theArgs)
 
 	# Get the state we need
-	theGrid = theArgs[:grid];
-	theFile = File.realpath(theArgs[:args][0]);
+	#
+	# Resolving the file path may fail so we grab the filename first then
+	# update it after it's resolved (if we could).
+	theGrid  = theArgs[:grid];
+	theFile  = theArgs[:args][0];
+
+	fileName = File.basename(theFile);
+	theError = "";
 
 
 
 	# Submit the job
-	jobID = Controller.submitJob(theGrid, theFile);
+	begin
+		theFile  = File.realpath(theFile);
+		fileName = File.basename(theFile);
+		jobID    = Controller.submitJob(theGrid, theFile);
 
-	puts "#{jobID}";
+	rescue Errno::ENOENT
+		theError = "unable to open #{fileName}";
+	
+	rescue Errno::EISDIR
+		theError = "#{fileName} is a directory";
+	
+	rescue JSON::ParserError
+		theError = "#{fileName} is not a valid .json file";
+	end
+
+
+
+	# Show the result
+	Utils.fatalError(theError) if (!theError.empty?)
+
+	puts "Submitted #{fileName} as #{jobID}";
 
 end
 

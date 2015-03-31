@@ -111,10 +111,10 @@ end
 def submitJob(theGrid, theFile)
 
 	# Prepare the job
-	theJob           = Job.new(theFile);
-	theJob.grid      = theGrid;
-	theJob.src_host  = System.address;
-	theJob.src_index = nextJobIndex();
+	theJob        = Job.new(theFile);
+	theJob.grid   = theGrid;
+	theJob.source = System.address;
+	theJob.index  = nextJobIndex();
 
 
 
@@ -232,7 +232,7 @@ def executeJob(jobID)
 
 
 		# Inform the source
-		Agent.callServer(theJob.src_host, "finishedJob", jobID);
+		Agent.callServer(theJob.source, "finishedJob", jobID);
 	end
 
 	return(true);
@@ -256,18 +256,18 @@ def finishedJob(jobID)
 
 
 		# Fetch the results
-		Syncer.fetchJob(  theJob.host, jobID);
-		Syncer.fetchFiles(theJob.host, theJob.task_outputs) if (!theJob.task_outputs.empty?);
+		Syncer.fetchJob(  theJob.worker, jobID);
+		Syncer.fetchFiles(theJob.worker, theJob.outputs) if (!theJob.outputs.empty?);
 
 
 		# Close the job
 		FileUtils.rm_rf(pathOpened);
 
-		Agent.callServer(theJob.host, "closeJob", jobID);
+		Agent.callServer(theJob.worker, "closeJob", jobID);
 
 
 		# Execute the done hook
-		invokeJobCmd(theJob, :done) if (!theJob.cmd_done.empty?);
+		invokeJobCmd(theJob, :result) if (!theJob.result.empty?);
 	end
 
 	return(true);
@@ -345,7 +345,7 @@ def invokeJobCmd(theJob, theCmd)
 	# Get the state we need
 	theEnvironment = getCmdEnvironment(theCmd, theJob);
 	theOptions     = getCmdOptions(    theCmd, theEnvironment);
-	cmdLine        = (theCmd == :task) ? theJob.cmd_task : theJob.cmd_done;
+	cmdLine        = (theCmd == :task) ? theJob.task : theJob.result;
 
 
 	# Invoke the command
@@ -370,30 +370,30 @@ def getCmdEnvironment(theCmd, theJob)
 	# All environment keys and values must be converted to strings.
 	theEnvironment = Hash.new();
 
-	theJob.task_environment.each_pair do |theKey, theValue|
+	theJob.environment.each_pair do |theKey, theValue|
 		theEnvironment[theKey.to_s] = theValue.to_s;
 	end
 
 
 
 	# Add the common values
-	theEnvironment["YGRID_ID"]       = theJob.id;
-	theEnvironment["YGRID_GRID"]     = theJob.grid;
-	theEnvironment["YGRID_HOST_SRC"] = theJob.src_host.to_s;
-	theEnvironment["YGRID_HOST_DST"] = theJob.host.to_s;
+	theEnvironment["YGRID_ID"]     = theJob.id;
+	theEnvironment["YGRID_GRID"]   = theJob.grid;
+	theEnvironment["YGRID_SOURCE"] = theJob.source.to_s;
+	theEnvironment["YGRID_WORKER"] = theJob.worker.to_s;
 
 
 
 	# Add the cmd-specific values
 	case theCmd
 		when :task
-			theEnvironment["YGRID_ROOT"]   = Workspace.pathHost(theJob.src_host);
-			theEnvironment["YGRID_STDIN"]  = (theJob.task_stdin == nil) ? "/dev/null" : theJob.task_stdin;
+			theEnvironment["YGRID_ROOT"]   = Workspace.pathHost(theJob.source);
+			theEnvironment["YGRID_STDIN"]  = (theJob.stdin == nil) ? "/dev/null" : theJob.stdin;
 			theEnvironment["YGRID_STDOUT"] = Workspace.pathActiveJob(theJob.jobID, Agent::JOB_STDOUT);
 			theEnvironment["YGRID_STDERR"] = Workspace.pathActiveJob(theJob.jobID, Agent::JOB_STDERR);
 			theEnvironment["YGRID_STATUS"] = Workspace.pathActiveJob(theJob.jobID, Agent::JOB_STATUS);
 
-		when :done
+		when :result
 			theEnvironment["YGRID_STDOUT"] = Workspace.pathCompletedJob(theJob.jobID, Agent::JOB_STDOUT);
 			theEnvironment["YGRID_STDERR"] = Workspace.pathCompletedJob(theJob.jobID, Agent::JOB_STDERR);
 			theEnvironment["YGRID_RESULT"] = getCmdState(theCmd,        theJob.jobID, Agent::JOB_RESULT);
@@ -427,7 +427,7 @@ def getCmdOptions(theCmd, theEnvironment)
 			theOptions[:out] = theEnvironment["YGRID_PATH_STDOUT"];
 			theOptions[:err] = theEnvironment["YGRID_PATH_STDERR"];
 
-		when :done
+		when :result
 			theOptions[:in]  = theEnvironment["YGRID_PATH_STDOUT"];
 			theOptions[:out] = "/dev/null";
 			theOptions[:err] = "/dev/null";

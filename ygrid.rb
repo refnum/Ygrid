@@ -165,6 +165,9 @@ def cmdSubmit(theArgs)
 	
 	rescue JSON::ParserError
 		theError = "#{fileName} is not a valid .json file";
+	
+	rescue YGrid::MissingTask
+		theError = "#{fileName} is missing a 'task' command";
 	end
 
 

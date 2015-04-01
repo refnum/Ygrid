@@ -169,16 +169,11 @@ end
 #----------------------------------------------------------------------------
 def Controller.submitJob(theGrid, theFile)
 
-	# Prepare the job
-	theJob    = Job.new(theFile);
-	theErrors = theJob.validate();
-
-	Utils.failIfError("Failed to submit #{File.basename(theFile)}:", theErrors);
-
-
-
 	# Submit the job
-	jobID = Agent.submitJob(theGrid, theFile);
+	#
+	# We try and load the job first to validate the file.
+	theJob = Job.new(theFile);
+	jobID  = Agent.submitJob(theGrid, theFile);
 
 	return(jobID);
 

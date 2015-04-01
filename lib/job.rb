@@ -93,28 +93,7 @@ DEFAULT_WEIGHTS		= { :local => 10.0, :cpu => 1.0, :memory => 1.0 };
 #------------------------------------------------------------------------------
 def initialize(thePath)
 
-	# Load the file
 	load(thePath);
-
-end
-
-
-
-
-
-#============================================================================
-#		Job::validate : Validate a job.
-#----------------------------------------------------------------------------
-def validate
-
-	# Validate the job
-	theErrors = [];
-	
-	if (@task.empty?)
-		theErrors << "job does not contain 'task'";
-	end
-
-	return(theErrors);
 
 end
 
@@ -144,9 +123,11 @@ def load(thePath)
 
 
 
-	# Convert the addresses
-	@worker      = IPAddr.new(@worker)     if (@worker     != nil);
-	@source  = IPAddr.new(@source) if (@source != nil);
+	# Finish off
+	@worker = IPAddr.new(@worker) if (@worker != nil);
+	@source = IPAddr.new(@source) if (@source != nil);
+	
+	validate();
 
 end
 
@@ -227,6 +208,19 @@ def self.decodeID(jobID)
 	theInfo    = { :index => theIndex, :source => theAddress };
 
 	return(theInfo);
+
+end
+
+
+
+
+
+#============================================================================
+#		Job::validate : Validate the job.
+#----------------------------------------------------------------------------
+def validate
+	
+	raise YGrid::MissingTask if (@task.empty?);
 
 end
 

@@ -248,40 +248,11 @@ end
 
 
 #============================================================================
-#		Utils.failIfError : Fail if errors are found.
-#----------------------------------------------------------------------------
-def Utils.failIfError(theMsg, theErrors, &theBlock)
-
-	# Handle failure
-	if (!theErrors.empty?)
-		# Show the errors
-		puts theMsg;
-	
-		theErrors.each do |theError|
-			puts "  #{theError}";
-		end
-
-
-		# Cleanup and quit
-		yield if block_given?;
-
-		exit(-1);
-	end
-
-end
-
-
-
-
-
-#============================================================================
 #		Utils.fatalError : Fail with an error.
 #----------------------------------------------------------------------------
-def Utils.fatalError(theError, &theBlock)
+def Utils.fatalError(theError)
 
 	puts "Fatal error: #{theError}";
-	yield if block_given?;
-
 	exit(-1);
 
 end

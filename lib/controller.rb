@@ -104,14 +104,15 @@ def Controller.start(theRoot, theGrids)
 
 
 	# Handle failure
-	theErrors = [];
+	theErrors = "";
 	
 	SERVERS.each do |theCmd|
-		theErrors << "Failed to start #{theCmd} server" if (!activeCmds.include?(theCmd));
+		theErrors << "  failed to start #{theCmd} server\n" if (!activeCmds.include?(theCmd));
 	end
 
-	Utils.failIfError("Unable to start ygrid:", theErrors) do
+	if (!theErrors.empty?)
 		Controller.stop();
+		Utils.fatalError("unable to start servers\n#{theErrors}");
 	end
 
 end

@@ -165,6 +165,19 @@ end
 
 
 #============================================================================
+#		Workspace.pathHost : Get the path to a host's root.
+#----------------------------------------------------------------------------
+def Workspace.pathHost(theHost)
+
+	return(Workspace.path("hosts/#{theHost}"));
+
+end
+
+
+
+
+
+#============================================================================
 #		Workspace.pathJobs : Get a path to the jobs folder.
 #----------------------------------------------------------------------------
 def Workspace.pathJobs(thePath="", theFile=nil)
@@ -172,6 +185,22 @@ def Workspace.pathJobs(thePath="", theFile=nil)
 	thePath = Workspace.path("jobs/#{thePath}");
 	thePath = thePath + "/#{theFile}" if (theFile != nil);
 	
+	return(thePath);
+
+end
+
+
+
+
+
+#============================================================================
+#		Workspace.pathRuntime : Get a path to a runtime file.
+#----------------------------------------------------------------------------
+def Workspace.pathRuntime(thePath="", theFile=nil)
+
+	thePath = Workspace.path("run/#{thePath}");
+	thePath = thePath + "/#{theFile}" if (theFile != nil);
+
 	return(thePath);
 
 end
@@ -237,7 +266,7 @@ end
 #----------------------------------------------------------------------------
 def Workspace.pathConfig(theCmd)
 
-	return(Workspace.path("run/#{theCmd}.cfg"));
+	return(Workspace.pathRuntime(theCmd + ".cfg"));
 
 end
 
@@ -250,7 +279,7 @@ end
 #----------------------------------------------------------------------------
 def Workspace.pathLog(theCmd)
 
-	return(Workspace.path("run/#{theCmd}.log"));
+	return(Workspace.pathRuntime(theCmd + ".log"));
 
 end
 
@@ -263,20 +292,7 @@ end
 #----------------------------------------------------------------------------
 def Workspace.pathPID(theCmd)
 
-	return(Workspace.path("run/#{theCmd}.pid"));
-
-end
-
-
-
-
-
-#============================================================================
-#		Workspace.pathHost : Get the path to a host's root.
-#----------------------------------------------------------------------------
-def Workspace.pathHost(theHost)
-
-	return(Workspace.path("hosts/#{theHost}"));
+	return(Workspace.pathRuntime(theCmd + ".pid"));
 
 end
 

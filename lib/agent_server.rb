@@ -368,6 +368,7 @@ def getCmdEnvironment(theCmd, theJob)
 	# Get the job environment
 	#
 	# All environment keys and values must be converted to strings.
+	jobID          = theJob.id;
 	theEnvironment = Hash.new();
 
 	theJob.environment.each_pair do |theKey, theValue|
@@ -389,14 +390,14 @@ def getCmdEnvironment(theCmd, theJob)
 		when :task
 			theEnvironment["YGRID_ROOT"]   = Workspace.pathHost(theJob.source);
 			theEnvironment["YGRID_STDIN"]  = (theJob.stdin == nil) ? "/dev/null" : theJob.stdin;
-			theEnvironment["YGRID_STDOUT"] = Workspace.pathActiveJob(theJob.jobID, Agent::JOB_STDOUT);
-			theEnvironment["YGRID_STDERR"] = Workspace.pathActiveJob(theJob.jobID, Agent::JOB_STDERR);
-			theEnvironment["YGRID_STATUS"] = Workspace.pathActiveJob(theJob.jobID, Agent::JOB_STATUS);
+			theEnvironment["YGRID_STDOUT"] = Workspace.pathActiveJob(jobID, Agent::JOB_STDOUT);
+			theEnvironment["YGRID_STDERR"] = Workspace.pathActiveJob(jobID, Agent::JOB_STDERR);
+			theEnvironment["YGRID_STATUS"] = Workspace.pathActiveJob(jobID, Agent::JOB_STATUS);
 
 		when :result
-			theEnvironment["YGRID_STDOUT"] = Workspace.pathCompletedJob(theJob.jobID, Agent::JOB_STDOUT);
-			theEnvironment["YGRID_STDERR"] = Workspace.pathCompletedJob(theJob.jobID, Agent::JOB_STDERR);
-			theEnvironment["YGRID_RESULT"] = getCmdState(theCmd,        theJob.jobID, Agent::JOB_RESULT);
+			theEnvironment["YGRID_STDOUT"] = Workspace.pathCompletedJob(jobID, Agent::JOB_STDOUT);
+			theEnvironment["YGRID_STDERR"] = Workspace.pathCompletedJob(jobID, Agent::JOB_STDERR);
+			theEnvironment["YGRID_RESULT"] = getCmdState(theCmd,        jobID, Agent::JOB_RESULT);
 	end
 
 	return(theEnvironment);

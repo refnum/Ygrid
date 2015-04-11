@@ -424,12 +424,12 @@ def getCmdOptions(theCmd, theEnvironment)
 	# Add the cmd-specific options
 	case theCmd
 		when :task
-			theOptions[:in]  = theEnvironment["YGRID_PATH_STDIN"];
-			theOptions[:out] = theEnvironment["YGRID_PATH_STDOUT"];
-			theOptions[:err] = theEnvironment["YGRID_PATH_STDERR"];
+			theOptions[:in]  = theEnvironment["YGRID_STDIN"];
+			theOptions[:out] = theEnvironment["YGRID_STDOUT"];
+			theOptions[:err] = theEnvironment["YGRID_STDERR"];
 
 		when :result
-			theOptions[:in]  = theEnvironment["YGRID_PATH_STDOUT"];
+			theOptions[:in]  = theEnvironment["YGRID_STDOUT"];
 			theOptions[:out] = "/dev/null";
 			theOptions[:err] = "/dev/null";
 	end

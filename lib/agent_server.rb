@@ -459,9 +459,9 @@ end
 
 
 #==============================================================================
-#		AgentServer::setJobState : Set a job state value.
+#		AgentServer::setCmdState : Set a command's state file.
 #------------------------------------------------------------------------------
-def setJobState(theCmd, jobID, fileName, theValue)
+def setCmdState(theCmd, jobID, fileName, theValue)
 
 	theFile = (theCmd == :task)	? Workspace.pathActiveJob(   jobID, fileName)
 								: Workspace.pathCompletedJob(jobID, fileName);

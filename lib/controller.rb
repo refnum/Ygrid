@@ -172,9 +172,11 @@ def Controller.submitJob(theGrid, theFile)
 
 	# Submit the job
 	#
-	# We try and load the job first to validate the file.
-	theJob = Job.new(theFile);
-	jobID  = Agent.submitJob(theGrid, theFile);
+	# Although we submit a file path, we instantiate the job locally to
+	# validate the file prior to submission.
+	Job.new(theFile);
+
+	jobID = Agent.submitJob(theGrid, theFile);
 
 	return(jobID);
 

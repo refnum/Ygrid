@@ -4,7 +4,7 @@
 #		workspace.rb
 #
 #	DESCRIPTION:
-#		Workspace modeul.
+#		Workspace module.
 #
 #	COPYRIGHT:
 #		Copyright (c) 2015, refNum Software
@@ -107,9 +107,11 @@ def Workspace.cleanup
 
 	# Clean up daemons
 	#
-	# Daemons will clean up their own pidfiles. We keep their logs but delete
-	# their config files from this sesion.
+	# Daemons will clean up their own pidfiles.
+	#
+	# We keep their logs but delete any config or state files from this sesion.
 	FileUtils.rm_f(Dir.glob(Workspace.path("run") + "/*cfg"));
+	FileUtils.rm_f(Dir.glob(Workspace.path("run") + "/*yml"));
 
 
 
@@ -335,6 +337,19 @@ end
 def Workspace.stateActiveJobs(&theBlock)
 
 	return(Workspace.state(Workspace.pathJobs("active/state.yml"), theBlock));
+
+end
+
+
+
+
+
+#============================================================================
+#		Workspace.stateStatus : Get the PStore for status state.
+#----------------------------------------------------------------------------
+def Workspace.stateStatus(&theBlock)
+
+	return(Workspace.state(Workspace.pathRuntime("status.yml"), theBlock));
 
 end
 

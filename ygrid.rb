@@ -7,7 +7,7 @@
 #		ygrid - simple clustering.
 #
 #	COPYRIGHT:
-#		Copyright (c) 2015, refNum Software
+#		Copyright (c) 2015-2019, refNum Software
 #		<http://www.refnum.com/>
 #
 #		All rights reserved.
